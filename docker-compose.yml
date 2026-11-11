@@ -1,0 +1,18 @@
+# Local run of both apps: `make up`, then http://localhost:3000.
+# The frontend runs its dev server, so edits under apps/web/src reload live.
+services:
+  api:
+    build: ./apps/api
+    ports:
+      - '8080:8080'
+
+  web:
+    build: ./apps/web
+    environment:
+      API_URL: http://api:8080
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./apps/web/src:/app/src
+    depends_on:
+      - api
