@@ -1,5 +1,4 @@
-
-@import "tailwindcss";
+@import 'tailwindcss';
 @plugin "@tailwindcss/typography";
 
 @theme {
@@ -76,7 +75,7 @@
   --hero-b           hero gradient stop B          orange-950/20
 */
 
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   --sea-ink: #f3f4f6;
   --sea-ink-soft: #9ca3af;
   --lagoon: #431407;
@@ -99,7 +98,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme='light']) {
     --sea-ink: #f3f4f6;
     --sea-ink-soft: #9ca3af;
     --lagoon: #431407;
@@ -247,7 +246,9 @@ pre code {
   background: var(--surface-strong);
   color: var(--sea-ink);
   outline: none;
-  transition: border-color 180ms ease, box-shadow 180ms ease;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
 .demo-input,
@@ -282,7 +283,9 @@ pre code {
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
-  transition: background-color 180ms ease, opacity 180ms ease;
+  transition:
+    background-color 180ms ease,
+    opacity 180ms ease;
 }
 
 .demo-button:hover {
@@ -327,7 +330,10 @@ pre code {
 button,
 .island-shell,
 a {
-  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease,
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
     transform 180ms ease;
 }
 
@@ -348,7 +354,7 @@ a {
 }
 
 .nav-link::after {
-  content: "";
+  content: '';
   position: absolute;
   left: 0;
   bottom: -6px;
