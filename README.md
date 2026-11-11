@@ -50,7 +50,53 @@ tools/            docs-budget: size check of the agent docs
 .claude/          skills, agents and hooks for Claude Code
 ```
 
-Both apps follow the same dependency rule: **adapters → application → domain**, never the reverse. In the API the domain declares ports that adapters implement; in the frontend pages depend on gateways, implemented over HTTP in the app and in memory in the tests.
+## Architecture
+
+```mermaid
+flowchart TB
+  browser(["Browser"])
+
+  subgraph web["apps/web · TanStack Start · :3000"]
+    direction LR
+    webroot["Composition root<br/>gateways.ts → route context"]
+    route["Route<br/>routes/index.tsx"]
+    query["Query options<br/>features/health/queries.ts"]
+    gateway{{"Gateway · port<br/>HealthGateway"}}
+    httpgw["HTTP gateway<br/>lib/http.ts"]
+    memgw["In-memory gateway<br/>used by the tests"]
+    webroot -. injects .-> route
+    route --> query --> gateway
+    httpgw -. implements .-> gateway
+    memgw -. implements .-> gateway
+  end
+
+  subgraph api["apps/api · Go · :8080"]
+    direction LR
+    apiroot["Composition root<br/>cmd/api/main.go<br/>GET /health"]
+    subgraph bc["internal/classified-ad"]
+      direction TB
+      driving["Driving adapters<br/>HTTP handler, consumer"]
+      app["Application<br/>commands, queries"]
+      domain["Domain<br/>aggregates, value objects,<br/>events, ports"]
+      driven["Driven adapters<br/>in-memory repository"]
+      driving --> app --> domain
+      driven -. implements .-> domain
+    end
+    bus[["Event bus<br/>pkg/eventbus"]]
+    mailer[["Mailer<br/>pkg/mailer"]]
+    apiroot -- wires --> driving
+    app -- publishes --> bus
+    bus -- delivers --> driving
+    app --> mailer
+  end
+
+  browser -- "pages, SSR" --> route
+  httpgw -- "browser: /api via the Vite proxy<br/>SSR: API_URL" --> apiroot
+```
+
+Solid arrows are calls, dotted arrows are an adapter implementing a port. Both apps follow the same dependency rule: **adapters → application → domain**, never the reverse. In the API the domain declares ports that adapters implement; in the frontend pages depend on gateways, implemented over HTTP in the app and in memory in the tests.
+
+Today only `/health` exists, answered directly in `main.go`; the `classified-ad` bounded context is an empty skeleton. Each new bounded context is another hexagon beside it, and two bounded contexts talk only through the event bus.
 
 ## Working with the agent
 
