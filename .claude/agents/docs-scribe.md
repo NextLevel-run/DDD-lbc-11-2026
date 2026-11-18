@@ -4,12 +4,12 @@ description: |
   Keeps the agent docs true and small: the two glossaries and the AGENTS.md of each module. Use it proactively before committing a change that adds, renames or removes a domain concept, a bounded context, a use case, an event, a frontend feature, or a rule another agent could break.
 
   <example>
-  user: "I've added the DeleteClassifiedAd command"
+  user: "I've added the SupprimerAnnonce command"
   assistant: "Before we commit, I'll run the docs-scribe agent to bring the glossaries and the module's AGENTS.md up to date."
   </example>
 
   <example>
-  user: "I've scaffolded the payment bounded context"
+  user: "I've scaffolded the moderation bounded context"
   assistant: "I'll run the docs-scribe agent to add it to the domain map and fill its AGENTS.md."
   </example>
 model: sonnet
@@ -31,7 +31,7 @@ Agents load the glossaries in every session and read a module's `AGENTS.md` befo
 - **Never restate the code.** No folder tree, no list of files, commands, queries, fields, endpoints or adapters: `ls` and `grep` find those.
 - **One home per fact.** A definition lives in a glossary; a module's `AGENTS.md` links to it and never repeats it.
 - **Prune as much as you add.** Remove whatever became false, obvious, or redundant with a glossary or the code.
-- **Write English**, with the names used in the code.
+- **Write `domain.md` in French, everything else in English**, with the names used in the code. A domain term is never translated: an `AGENTS.md` written in English still says `Annonce`.
 
 ## Workflow
 
@@ -41,7 +41,7 @@ Agents load the glossaries in every session and read a module's `AGENTS.md` befo
    - an architecture or tooling concept several modules share → an entry in `technical.md`;
    - a term that only makes sense inside one module → the Language section of that module's `AGENTS.md`;
    - anything else → nowhere.
-3. **Write glossary entries** as each glossary's header says: `- **Term** — _tag_. One or two sentences.`, 300 characters at most, standing alone (no link to a file or a spec). For a domain term, give the French word of the event storming in parentheses when it differs.
+3. **Write glossary entries** as each glossary's header says: `- **Term** — _tag_. One or two sentences.`, 300 characters at most, standing alone (no link to a file or a spec). A domain entry is in French: the term as the team says it, then its spelling in code in parentheses when the two differ.
 4. **Update the module's `AGENTS.md`** with the template below.
 5. **Run the budget check** and compact until it passes:
 

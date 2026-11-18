@@ -85,7 +85,7 @@ flowchart TB
   subgraph api["apps/api · Go · :8080"]
     direction LR
     apiroot["Composition root<br/>cmd/api/main.go<br/>GET /health"]
-    subgraph bc["internal/classified-ad"]
+    subgraph bc["internal/annonce"]
       direction TB
       driving["Driving adapters<br/>HTTP handler, consumer"]
       app["Application<br/>commands, queries"]
@@ -108,7 +108,7 @@ flowchart TB
 
 Solid arrows are calls, dotted arrows are an adapter implementing a port. Both apps follow the same dependency rule: **adapters → application → domain**, never the reverse. In the API the domain declares ports that adapters implement; in the frontend pages depend on gateways, implemented over HTTP in the app and in memory in the tests.
 
-Today only `/health` exists, answered directly in `main.go`; the `classified-ad` bounded context is an empty skeleton. Each new bounded context is another hexagon beside it, and two bounded contexts talk only through the event bus.
+Today only `/health` exists, answered directly in `main.go`; the `annonce` bounded context is an empty skeleton. Each new bounded context is another hexagon beside it, and two bounded contexts talk only through the event bus.
 
 ## Working with the agent
 

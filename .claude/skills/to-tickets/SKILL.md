@@ -55,6 +55,8 @@ Iterate until the user approves the breakdown.
 
 ### 5. Write the tickets
 
+**Write the tickets in French**, like the specs: title, description and acceptance criteria, with the domain terms of `documentation/glossary/domain.md`. Slugs are French without accents; technical terms and the `Status` value stay as they are.
+
 This project has no issue tracker: write one file per approved ticket under `documentation/tickets/<feature-slug>/<NN>-<slug>.md`, numbered from `01` in dependency order (blockers first). Each file's "Blocked by" lists the numbers/titles it depends on. Use the template below: one ticket per file, never a single combined file.
 
 Work the **frontier**: any ticket whose blockers are all done. For a purely linear chain that means top to bottom.

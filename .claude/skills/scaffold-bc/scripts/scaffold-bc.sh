@@ -8,7 +8,7 @@ set -e
 if [ -z "$1" ]; then
     echo "Error: Bounded context name is required"
     echo "Usage: bash scaffold-bc.sh <bounded-context-name>"
-    echo "Example: bash scaffold-bc.sh user-management"
+    echo "Example: bash scaffold-bc.sh moderation"
     exit 1
 fi
 

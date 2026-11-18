@@ -37,6 +37,21 @@ The two glossaries are loaded with this file and are the only ones: [`technical.
 - Use the glossaries' names, spelled as in the code.
 - Add a missing term to its glossary in the same change as the code that uses it; never invent one in code. Each glossary's header says how an entry is written.
 
+## Language: French domain, English technique
+
+The team models in French, so the business vocabulary stays in French everywhere, code included. Never translate a domain term into English.
+
+- **French, from `domain.md`**: every name that carries a business concept (aggregates, value objects, commands, events, domain errors, their fields and methods, the bounded context folder, JSON keys, URL segments, frontend features), plus `domain.md` itself, the specs, the tickets and every text shown to a user.
+- **English**: the pattern words around those names (`New…`, `Err…`, `…Command`, `…Event`, `…Repository`, `…View`, `…Handler`, `…Gateway`), everything technical, comments, test descriptions, commit messages, `technical.md`, every `AGENTS.md` and the skills.
+- **ASCII in code**: drop accents, cedillas and apostrophes in identifiers, file names, URLs, JSON keys and event types. Keep them in prose and in user-facing text.
+
+| Domain term | In code |
+| --- | --- |
+| Annonce | `Annonce`, `NewAnnonce`, `AnnonceRepository`, `internal/annonce/` |
+| Déposer annonce | `DeposerAnnonceCommand`, `deposer_annonce.go`, `POST /annonces` |
+| Annonce déposée | `AnnonceDeposeeEvent`, type `"AnnonceDeposee"` |
+| a business failure | `ErrTitreVide`, `ErrAnnonceIntrouvable` |
+
 ## Contribution rules
 
 - **Ask before coding.** Clarify the requirement first; the `grill-me` skill does it thoroughly.
@@ -45,7 +60,7 @@ The two glossaries are loaded with this file and are the only ones: [`technical.
 - **Dependencies point inward**, in both apps: adapters depend on the application and the domain, never the reverse. The domain imports no framework and no adapter.
 - **One bounded context never imports another.** They talk through events.
 - **Test on in-memory adapters**, in both apps. No mock of `fetch`, no mocking library for ports.
-- **Write everything in English**: code, tests, docs, commit messages.
+- **Mind the language split** above: French for the domain, English for the rest.
 - **Secrets**: never commit a `.env`.
 
 ## Working on a feature

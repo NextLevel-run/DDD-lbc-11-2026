@@ -1,7 +1,7 @@
 # Technical glossary
 
 Architecture and tooling vocabulary of the marketplace. One unambiguous English name per concept,
-spelled as in the code. Business terms live in `domain.md`.
+spelled as in the code. Business terms live in `domain.md`, in French.
 
 An entry says what a term is, in one or two sentences, 300 characters at most. A term earns an
 entry when it names an architecture or tooling concept that several modules share. A single-module

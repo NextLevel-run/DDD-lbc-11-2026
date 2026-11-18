@@ -39,6 +39,6 @@ apps/api/internal/<bounded-context-name>/
 
 ## Naming Conventions
 
-- Bounded context directory: `kebab-case` (`user-management`, `classified-ad`)
-- Files: `snake_case` (`user_account.go`)
+- Bounded context directory: `kebab-case`, the French name from `domain.md` without accents (`annonce`, `moderation`)
+- Files: `snake_case`, French domain names without accents (`annonce.go`, `deposer_annonce.go`)
 - Go packages: `lowercase` (`package domain`)

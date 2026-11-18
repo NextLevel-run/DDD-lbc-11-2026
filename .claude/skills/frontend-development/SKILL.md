@@ -106,11 +106,14 @@ Use `useAppForm` from `hooks/form.ts` with the field components of `components/F
 
 | Thing | Convention | Example |
 | --- | --- | --- |
-| Feature folder | kebab-case, a domain glossary name | `features/classified-ad/` |
-| Port | `<Feature>Gateway` | `ClassifiedAdGateway` |
-| Adapter factory | `create<Kind><Feature>Gateway` | `createHttpClassifiedAdGateway` |
-| Query factory | `<what>QueryOptions` | `classifiedAdQueryOptions` |
+| Feature folder | kebab-case, a domain glossary name | `features/annonce/` |
+| Port | `<Feature>Gateway` | `AnnonceGateway` |
+| Adapter factory | `create<Kind><Feature>Gateway` | `createHttpAnnonceGateway` |
+| Query factory | `<what>QueryOptions` | `annonceQueryOptions` |
+| Route file | the French domain word, no accent | `routes/annonces/deposer.tsx` |
 | Test name | `it('does X when Y')`, no _should_ | `it('says the API is unreachable when the health check fails')` |
+
+Domain names are French, spelled as in `documentation/glossary/domain.md` and without accents in code (types, fields, gateway methods, feature folders, URLs); the pattern words around them (`Gateway`, `QueryOptions`, `create…`) and test descriptions stay English. Everything a user reads (labels, buttons, messages, validation errors) is French, with its accents, and tests query that French text.
 
 Imports inside `src/` use the `#/` alias (`#/features/health/queries`), without file extension.
 

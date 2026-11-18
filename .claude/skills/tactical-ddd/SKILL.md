@@ -90,17 +90,22 @@ internal/
 
 ## Naming Conventions Summary
 
+**The domain is named in French.** The references illustrate the patterns with an English `Order` example: copy the shape, never the vocabulary. Every business name (aggregate, value object, field, method, command verb, event, error) is the French term of `domain.md`, without accents in code; only the pattern words (`New`, `Err`, `Command`, `Event`, `Repository`, `View`) stay English. Messages a user can read are French; comments and test names are English.
+
 | Concept | Convention | Example |
 |---------|------------|---------|
-| Aggregate Root | Singular noun | `Order` |
-| Internal Entity | Singular noun | `OrderItem`, `BidHistory` |
-| Constructor | `New` prefix | `NewOrder()` |
-| Error | `Err` prefix | `ErrEmptyOrderItems` |
-| Command | Verb + Noun + "Command" | `PlaceOrderCommand` |
-| Event struct | Past tense + "Event" | `OrderPlacedEvent` |
-| Event type | Past tense string | `"OrderPlaced"` |
-| Repository | AggregateRoot + "Repository" | `OrderRepository` |
-| View/Presenter | AggregateRoot + "View" | `OrderView` |
+| Aggregate Root | Singular noun | `Annonce` |
+| Internal Entity | Singular noun | `Photo` |
+| Constructor | `New` prefix | `NewAnnonce()` |
+| Behavior method | French verb | `annonce.Valider()` |
+| Error | `Err` prefix + French | `ErrTitreVide` |
+| Command | Infinitive + Noun + "Command" | `DeposerAnnonceCommand` |
+| Event struct | Noun + past participle + "Event" | `AnnonceDeposeeEvent` |
+| Event type | Same, as a string | `"AnnonceDeposee"` |
+| Repository | AggregateRoot + "Repository" | `AnnonceRepository` |
+| View/Presenter | AggregateRoot + "View" | `AnnonceView` |
+| File | `snake_case` | `annonce.go`, `deposer_annonce.go` |
+| JSON key, URL segment | French, no accent | `"prix"`, `/annonces` |
 
 ## Workflow: Adding a New Feature
 
