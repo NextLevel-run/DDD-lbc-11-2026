@@ -100,6 +100,18 @@ export interface SupprimerAnnonceArgs {
 // The fields of the suppression form, as the API names them in `champ`.
 export type ChampSuppression = 'motDePasse' | 'raison'
 
+// What an acheteur writes to the vendeur of an annonce. The vendeur answers
+// by email, to this address; theirs is never shown.
+export interface ContacterArgs {
+  id: string
+  pseudo: string
+  email: string
+  message: string
+}
+
+// The fields of the contact form, as the API names them in `champ`.
+export type ChampContact = 'pseudo' | 'email' | 'message'
+
 // Port: what the UI needs from the API about annonces.
 export interface AnnonceGateway {
   // Resolves to null when no consultable annonce has this ID.
@@ -117,4 +129,8 @@ export interface AnnonceGateway {
   // unknown raison) rejects with an ApiError whose `champ` names the field;
   // an unknown or already supprimee annonce rejects with a 404.
   supprimerAnnonce: (args: SupprimerAnnonceArgs) => Promise<void>
+  // Resolves once the vendeur has been emailed. A refused field rejects with
+  // an ApiError naming it, an annonce no longer online with a 404, an email
+  // that could not leave with a 502.
+  contacter: (args: ContacterArgs) => Promise<void>
 }

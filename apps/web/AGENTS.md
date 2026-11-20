@@ -1,6 +1,6 @@
 # apps/web
 
-The frontend of the marketplace: a TanStack Start app whose pages reach the API only through gateways. The home page shows a search bar and the latest annonces; `/recherche` lists results, `/annonces/$id` shows one, `/annonces/deposer` deposits one, `/annonces/$id/supprimer` withdraws one (file `$id_.supprimer.tsx`: the `_` keeps it from nesting under the `$id` page, which has no outlet).
+The frontend of the marketplace: a TanStack Start app whose pages reach the API only through gateways. The home page shows a search bar and the latest annonces; `/recherche` lists results, `/annonces/$id` shows one with an unfolding contact form; `/annonces/deposer` deposits one; `/annonces/$id/supprimer` withdraws one (file `$id_.supprimer.tsx`: the `_` keeps it from nesting under the `$id` page, which has no outlet).
 
 ## Language
 
@@ -43,6 +43,7 @@ pnpm format           # fix formatting and lint
 - **`renderRoute` mounts on `document`**, as the app hydrates it: mounted in a div, the `<body>` of `__root.tsx` fights Spark's portals and the first re-render loops forever.
 - **Search criteria live in the URL**: `/recherche` validates them with `rechercheSearchSchema` (unusable values dropped, never an error page) and loads through `loaderDeps`. The URL carries prix bounds in euros, `criteresDeRecherche` turns them into the centimes of `CriteresRecherche`. A new criterion is added to the schema, `CriteresRecherche`, `RechercheForm` and the HTTP gateway's query string; a changed criterion drops `page`. The lieu selector holds `region:84` or `departement:2A` and writes `region` or `departement` to the URL; `criteresDeRecherche` drops a code missing from the loaded régions, so the loader awaits `regionsQueryOptions` first.
 - **The in-memory gateway mirrors the API's search** (every word, no case or accent, catégorie, prix bounds included, région or département, exact code postal or whole normalised ville, newest first, 20 a page); its default régions are a small subset of the API's table: change both together.
+- **The in-memory gateway's `contacter` accepts `{ envoiImpossible: true }` options** to simulate a 502; use it in tests that assert the contact form shows the send-failure message.
 - **Devtools are skipped in tests** (`import.meta.env.MODE !== 'test'` in `__root.tsx`): keep that guard.
 
 ## Design system: Spark UI

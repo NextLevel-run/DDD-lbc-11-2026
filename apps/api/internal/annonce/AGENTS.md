@@ -1,6 +1,6 @@
 # annonce
 
-The core bounded context: the annonces vendeurs put up for sale and acheteurs consult. It knows nothing of accounts, moderation or messaging; those will react to its events.
+The core bounded context: the annonces vendeurs put up for sale and acheteurs consult. It knows nothing of accounts or moderation; those will react to its events.
 
 ## Language
 
@@ -10,11 +10,12 @@ Shared terms: [`domain.md`](../../../../documentation/glossary/domain.md), [`tec
 - `MotDePasse` — value object: pbkdf2-sha256 hash with a random salt, `Correspond(saisie)`; no getter, the clear text and the hash never leave the domain.
 - `RaisonSuppression` — value object: closed list of codes (`vendue-sur-le-site`, `vendue-ailleurs`, `plus-envie-de-vendre`, `autre`), carried by `AnnonceSupprimee` only, never kept on the annonce.
 - `RestoreAnnonce` — rebuilds an annonce whose ID and `Statut` are known (persistence, tests); `NewAnnonce` always makes a fresh UUID, `Activee`.
+- `FormulaireContact` — value object: pseudo and email (same rules as `Vendeur`), message 10–2 000 runes trimmed; not persisted, emailed and carried by `FormulaireContactSoumis`.
 
 ## Boundaries
 
-- Driving: the HTTP handler (`GET /annonces`, `GET /annonces/{id}`, `POST /annonces`, `POST /annonces/{id}/suppression`, `GET /regions`, mounted by `RegisterRoutes`); the consumer `adapter/driving/consumer` (`SubscribeConfirmationDepot`).
-- Events produced: `AnnonceDeposee` (carries the `*Annonce`), on the async bus of `main.go`; moderation will subscribe too. `AnnonceSupprimee` (ID, `Raison`, `SupprimeeLe`) has no consumer yet. Events consumed: its own `AnnonceDeposee`, to send the confirmation de dépôt through the mailer port.
+- Driving: the HTTP handler (`GET /annonces`, `GET /annonces/{id}`, `POST /annonces`, `POST /annonces/{id}/suppression`, `POST /annonces/{id}/contact`, `GET /regions`, mounted by `RegisterRoutes`); the consumer `adapter/driving/consumer` (`SubscribeConfirmationDepot`).
+- Events produced: `AnnonceDeposee` (carries the `*Annonce`), on the async bus of `main.go`; moderation will subscribe too. `AnnonceSupprimee` (ID, `Raison`, `SupprimeeLe`) has no consumer yet. `FormulaireContactSoumis` (AnnonceID, Pseudo, Email, Message, SoumisLe) has no consumer yet. Events consumed: its own `AnnonceDeposee`, to send the confirmation de dépôt through the mailer port.
 - Demo annonces are seeded by the composition root (`cmd/api/demo_annonces.go`), not by this context.
 
 ## Flows
@@ -25,10 +26,14 @@ Shared terms: [`domain.md`](../../../../documentation/glossary/domain.md), [`tec
 - Supprimer annonce: `POST /annonces/{id}/suppression {motDePasse, raison}` → `ParseAnnonceID` → `NewRaisonSuppression` → `GetByID` → `Annonce.Supprimer` (statut `Supprimee`, stays in the repository) → `Save` → publish `AnnonceSupprimee` → `204`. Wrong mot de passe: `ErrMotDePasseIncorrect`, 400 on `champ` `motDePasse`; missing or unknown raison: 400 on `raison`; unknown or already supprimee: `ErrAnnonceIntrouvable` (404). Attempts are not limited.
 - Lister régions: `GET /regions` → `[{"code", "nom", "departements": [{"code", "nom"}]}]`, from the static table; feeds the lieu selector.
 - Consulter annonce: `ParseAnnonceID` → `GetByID` → `EstActivee` → `AnnonceView`. A malformed ID is `ErrIDAnnonceInvalide` (400); unknown or not activee is `ErrAnnonceIntrouvable` (404).
+- Contacter: `POST /annonces/{id}/contact {pseudo, email, message}` → `NewFormulaireContact` → `GetByID` → `EstActivee` → email vendeur (From = platform `fromEmail`, Reply-To = acheteur) → `FormulaireContactSoumis` → 204. Unknown or not activee: `ErrAnnonceIntrouvable` (404); send failure: `ErrEnvoiImpossible` (502), nothing published.
 
 ## Invariants and pitfalls
 
 - **Acheteurs never see the vendeur's email or telephone, only the pseudo**: no view, no JSON response carries them. Events may (`AnnonceDeposee`): they stay inside the API.
+- **The contact email is sent synchronously**, unlike the confirmation de dépôt (async consumer): a send failure blocks the command and returns `ErrEnvoiImpossible` (502); nothing is published.
+- **`ErrEnvoiImpossible` lives in `application/command`, not in `domain`**: it is an infrastructure failure, not a business rule.
+- **The acheteur's email never appears in the email body**, only as the Reply-To header; the vendeur replies via their email client, not through the platform.
 - **The mot de passe never appears** in a view, an event, a log or a JSON response; `Annonce.MotDePasseCorrespond` is the only question asked. Demo annonces all use `demo1234`.
 - **The confirmation email never contains the mot de passe**, only the sentence that the suppression will ask for it.
 - **A non-activee annonce answers `ErrAnnonceIntrouvable`**, never a distinct error: its existence must not leak.

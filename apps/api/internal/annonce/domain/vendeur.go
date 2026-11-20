@@ -31,19 +31,38 @@ var (
 // telephone is French, ten digits starting with 0; spaces, dots and dashes
 // between the digits are dropped.
 func NewVendeur(pseudo, email, telephone string) (Vendeur, error) {
-	pseudo = strings.TrimSpace(pseudo)
-	if n := utf8.RuneCountInString(pseudo); n < pseudoMin || n > pseudoMax {
-		return Vendeur{}, ErrPseudoInvalide
+	pseudo, err := validerPseudo(pseudo)
+	if err != nil {
+		return Vendeur{}, err
 	}
-	email = strings.TrimSpace(email)
-	if !emailFormat.MatchString(email) {
-		return Vendeur{}, ErrEmailInvalide
+	email, err = validerEmail(email)
+	if err != nil {
+		return Vendeur{}, err
 	}
 	telephone = telephoneBlanks.Replace(strings.TrimSpace(telephone))
 	if telephone != "" && !telephoneFormat.MatchString(telephone) {
 		return Vendeur{}, ErrTelephoneInvalide
 	}
 	return Vendeur{pseudo: pseudo, email: email, telephone: telephone}, nil
+}
+
+// validerPseudo trims a pseudo and checks its length; vendeurs and acheteurs
+// share the rule.
+func validerPseudo(pseudo string) (string, error) {
+	pseudo = strings.TrimSpace(pseudo)
+	if n := utf8.RuneCountInString(pseudo); n < pseudoMin || n > pseudoMax {
+		return "", ErrPseudoInvalide
+	}
+	return pseudo, nil
+}
+
+// validerEmail trims an email and accepts a bare address only.
+func validerEmail(email string) (string, error) {
+	email = strings.TrimSpace(email)
+	if !emailFormat.MatchString(email) {
+		return "", ErrEmailInvalide
+	}
+	return email, nil
 }
 
 func (v Vendeur) Pseudo() string    { return v.pseudo }

@@ -22,6 +22,9 @@ type serverConfig struct {
 	FrontendURL string // base of the links in emails
 }
 
+// fromEmail is the fixed sender of every email of the platform.
+const fromEmail = "noreply@seconde-main.local"
+
 // newServer builds every adapter and use case, wires the consumers and returns
 // the HTTP handler, with the IDs of the demo annonces it loaded. The
 // integration tests run it as is, with a mailer spy.
@@ -46,7 +49,7 @@ func newServer(cfg serverConfig) (http.Handler, []string, error) {
 		demoIDs = ids
 	}
 	if err := annonceconsumer.SubscribeConfirmationDepot(eventBus, annoncecommand.BuildEnvoyerConfirmationDepotCommand(
-		cfg.Mailer, "noreply@seconde-main.local", cfg.FrontendURL,
+		cfg.Mailer, fromEmail, cfg.FrontendURL,
 	)); err != nil {
 		return nil, nil, fmt.Errorf("consumer: %w", err)
 	}
@@ -56,6 +59,7 @@ func newServer(cfg serverConfig) (http.Handler, []string, error) {
 		annoncequery.BuildListerRegionsQuery(),
 		annoncecommand.BuildDeposerAnnonceCommand(annonceRepository, eventBus, time.Now),
 		annoncecommand.BuildSupprimerAnnonceCommand(annonceRepository, eventBus, time.Now),
+		annoncecommand.BuildContacterCommand(annonceRepository, cfg.Mailer, eventBus, time.Now, fromEmail, cfg.FrontendURL),
 	).RegisterRoutes(mux)
 
 	return mux, demoIDs, nil

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  contacterSchema,
   deposerAnnonceSchema,
   eurosEnCentimes,
   criteresDeRecherche,
@@ -253,5 +254,46 @@ describe('criteresDeRecherche', () => {
   it('drops a region or a departement the API does not know', () => {
     expect(criteresDeRecherche({ region: '99' }, regions)).toEqual({})
     expect(criteresDeRecherche({ departement: '975' }, regions)).toEqual({})
+  })
+})
+
+describe('contacterSchema', () => {
+  const contact = {
+    pseudo: 'acheteur42',
+    email: 'acheteur@example.com',
+    message: 'Est-il toujours disponible ?',
+  }
+  const messagesDeContact = (values: Partial<typeof contact>) => {
+    const result = contacterSchema.safeParse({ ...contact, ...values })
+    return result.success
+      ? []
+      : result.error.issues.map((issue) => issue.message)
+  }
+
+  it('accepts a valid contact and trims it', () => {
+    expect(
+      contacterSchema.parse({ ...contact, message: '  Toujours dispo ?  ' }),
+    ).toEqual({ ...contact, message: 'Toujours dispo ?' })
+  })
+
+  it.each([
+    [
+      'pseudo',
+      { pseudo: 'a' },
+      'Le pseudo doit comporter de 2 à 30 caractères',
+    ],
+    ['email', { email: 'Bob <a@example.com>' }, "L'email n'est pas valide"],
+    [
+      'short message once trimmed',
+      { message: '   court   ' },
+      'Le message doit comporter de 10 à 2 000 caractères',
+    ],
+    [
+      'long message',
+      { message: 'a'.repeat(2001) },
+      'Le message doit comporter de 10 à 2 000 caractères',
+    ],
+  ])('rejects a wrong %s', (_, values, message) => {
+    expect(messagesDeContact(values)).toEqual([message])
   })
 })

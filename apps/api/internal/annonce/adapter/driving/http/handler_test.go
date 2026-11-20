@@ -13,6 +13,8 @@ import (
 	"ddd-second-hand-marketplace/internal/annonce/application/query"
 	"ddd-second-hand-marketplace/internal/annonce/domain"
 	"ddd-second-hand-marketplace/pkg/eventbus"
+	"ddd-second-hand-marketplace/pkg/mailer"
+	mailertesting "ddd-second-hand-marketplace/pkg/mailer/testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -23,6 +25,11 @@ var maintenant = time.Date(2026, 11, 19, 9, 30, 0, 0, time.UTC)
 
 func setupHandler(t *testing.T) (*inmemory.InMemoryAnnonceRepository, *http.ServeMux) {
 	t.Helper()
+	return setupHandlerWithMailer(t, mailertesting.NewMailerSpy())
+}
+
+func setupHandlerWithMailer(t *testing.T, m mailer.Mailer) (*inmemory.InMemoryAnnonceRepository, *http.ServeMux) {
+	t.Helper()
 	repo := inmemory.NewInMemoryAnnonceRepository()
 	bus := eventbus.NewSyncInMemoryEventBus()
 	mux := http.NewServeMux()
@@ -32,6 +39,7 @@ func setupHandler(t *testing.T) (*inmemory.InMemoryAnnonceRepository, *http.Serv
 		query.BuildListerRegionsQuery(),
 		command.BuildDeposerAnnonceCommand(repo, bus, func() time.Time { return maintenant }),
 		command.BuildSupprimerAnnonceCommand(repo, bus, func() time.Time { return maintenant }),
+		command.BuildContacterCommand(repo, m, bus, func() time.Time { return maintenant }, "noreply@example.com", "http://front.test"),
 	).RegisterRoutes(mux)
 	return repo, mux
 }

@@ -90,6 +90,14 @@ type SupprimerAnnonceRequest struct {
 	Raison     string `json:"raison"`
 }
 
+// ContacterRequest is the body of POST /annonces/{id}/contact: the acheteur's
+// pseudo, email and message.
+type ContacterRequest struct {
+	Pseudo  string `json:"pseudo"`
+	Email   string `json:"email"`
+	Message string `json:"message"`
+}
+
 type DeposerAnnonceResponse struct {
 	ID string `json:"id"`
 }

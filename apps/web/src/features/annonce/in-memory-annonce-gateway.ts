@@ -55,6 +55,8 @@ export function createInMemoryAnnonceGateway(
     depotRefuse?: { erreur: string; champ?: ChampDepot }
     // The mot de passe of the annonces given above (default « demo1234 »).
     motDePasse?: string
+    // Makes every contact fail as the API does when the email cannot leave.
+    envoiImpossible?: boolean
   } = {},
 ): AnnonceGateway {
   const annonces = new Map(
@@ -109,6 +111,18 @@ export function createInMemoryAnnonceGateway(
       }
       annonces.delete(id)
       motsDePasse.delete(id)
+    },
+    // The form checks the fields: only the annonce and the email are left.
+    contacter: async ({ id }) => {
+      if (!annonces.has(id)) {
+        throw new ApiError('Annonce introuvable', 404)
+      }
+      if (options.envoiImpossible) {
+        throw new ApiError(
+          "Votre message n'a pas pu être envoyé, réessayez plus tard.",
+          502,
+        )
+      }
     },
   }
 }

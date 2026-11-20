@@ -75,5 +75,11 @@ export function createHttpAnnonceGateway(): AnnonceGateway {
         body: JSON.stringify({ motDePasse, raison }),
       })
     },
+    contacter: async ({ id, pseudo, email, message }) => {
+      await request<void>(`/annonces/${encodeURIComponent(id)}/contact`, {
+        method: 'POST',
+        body: JSON.stringify({ pseudo, email, message }),
+      })
+    },
   }
 }

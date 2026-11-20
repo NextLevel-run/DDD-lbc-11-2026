@@ -27,4 +27,5 @@ var (
 	ErrRegionInconnue            = errors.New("région inconnue")
 	ErrCodeDepartementInconnu    = errors.New("département inconnu")
 	ErrLieuAmbigu                = errors.New("choisir une région ou un département, pas les deux")
+	ErrMessageInvalide           = errors.New("le message doit comporter de 10 à 2 000 caractères")
 )

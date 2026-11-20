@@ -36,6 +36,13 @@ function designeUnDepartement(codePostal: string): boolean {
 const longueur = (min: number, max: number, message: string) =>
   z.string().trim().min(min, message).max(max, message)
 
+// The vendeur's and the acheteur's share these rules, as in the API.
+const pseudo = longueur(2, 30, 'Le pseudo doit comporter de 2 à 30 caractères')
+const email = z
+  .string()
+  .trim()
+  .regex(/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/, "L'email n'est pas valide")
+
 // The rules of the domain, checked in the browser for an immediate feedback.
 // The API has the final say: its errors are shown too. Parsing turns the
 // values into DeposerAnnonceArgs.
@@ -77,11 +84,8 @@ export const deposerAnnonceSchema = z.object({
     .refine(designeUnDepartement, {
       message: 'Le code postal ne désigne aucun département',
     }),
-  pseudo: longueur(2, 30, 'Le pseudo doit comporter de 2 à 30 caractères'),
-  email: z
-    .string()
-    .trim()
-    .regex(/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/, "L'email n'est pas valide"),
+  pseudo,
+  email,
   telephone: z
     .string()
     .transform((telephone) => telephone.replace(/[\s.-]/g, ''))
@@ -108,6 +112,20 @@ export const supprimerAnnonceSchema = z.object({
 })
 
 export type SupprimerAnnonceValues = z.infer<typeof supprimerAnnonceSchema>
+
+// The contact form: the acheteur's pseudo and email, and their message,
+// 10 to 2 000 characters once trimmed.
+export const contacterSchema = z.object({
+  pseudo,
+  email,
+  message: longueur(
+    10,
+    2000,
+    'Le message doit comporter de 10 à 2 000 caractères',
+  ),
+})
+
+export type ContacterValues = z.input<typeof contacterSchema>
 
 // A text read from the URL (mot-clé, code, ville): a number as text, a blank
 // as none.

@@ -49,3 +49,33 @@ func (e *AnnonceSupprimeeEvent) ID() string        { return e.id }
 func (e *AnnonceSupprimeeEvent) OccurredAt() time.Time {
 	return e.occurredAt
 }
+
+// FormulaireContactSoumisEvent is emitted once the message of an acheteur has
+// been emailed to the vendeur of an annonce. It carries the acheteur's
+// details, never the vendeur's email nor telephone.
+type FormulaireContactSoumisEvent struct {
+	id         string
+	occurredAt time.Time
+	AnnonceID  string
+	Pseudo     string
+	Email      string
+	Message    string
+	SoumisLe   time.Time
+}
+
+const FormulaireContactSoumisEventType = "FormulaireContactSoumis"
+
+func NewFormulaireContactSoumisEvent(occurredAt time.Time, annonceID string, formulaire FormulaireContact) *FormulaireContactSoumisEvent {
+	return &FormulaireContactSoumisEvent{
+		id: uuid.NewString(), occurredAt: occurredAt, AnnonceID: annonceID,
+		Pseudo: formulaire.Pseudo(), Email: formulaire.Email(), Message: formulaire.Message(),
+		SoumisLe: occurredAt,
+	}
+}
+
+// EventType implements eventbus.DomainEvent.
+func (e *FormulaireContactSoumisEvent) EventType() string { return FormulaireContactSoumisEventType }
+func (e *FormulaireContactSoumisEvent) ID() string        { return e.id }
+func (e *FormulaireContactSoumisEvent) OccurredAt() time.Time {
+	return e.occurredAt
+}

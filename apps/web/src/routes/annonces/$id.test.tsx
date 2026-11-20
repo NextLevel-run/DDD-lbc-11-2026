@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { createInMemoryAnnonceGateway } from '#/features/annonce/in-memory-annonce-gateway'
 import { renderRoute } from '#/test/renderRoute'
@@ -80,5 +81,98 @@ describe('Annonce page', () => {
     expect(
       await screen.findByRole('heading', { name: 'Annonce introuvable' }),
     ).toBeInTheDocument()
+  })
+
+  describe('contact', () => {
+    const renderContact = (options: { envoiImpossible?: boolean } = {}) =>
+      renderRoute(`/annonces/${velo.id}`, {
+        gateways: {
+          annonce: createInMemoryAnnonceGateway({
+            annonces: [velo],
+            ...options,
+          }),
+        },
+      })
+
+    async function ouvrirEtRemplir(
+      user: ReturnType<typeof userEvent.setup>,
+      message = 'Est-il toujours disponible ?',
+    ) {
+      await user.click(
+        await screen.findByRole('button', { name: 'Contacter le vendeur' }),
+      )
+      await user.type(screen.getByLabelText(/^Votre pseudo/), 'acheteur42')
+      await user.type(
+        screen.getByLabelText(/^Votre email/),
+        'acheteur@example.com',
+      )
+      await user.type(screen.getByLabelText(/^Votre message/), message)
+    }
+
+    const envoyer = () =>
+      screen.getByRole('button', { name: 'Envoyer le message' })
+
+    it('unfolds the contact form when the acheteur clicks the button', async () => {
+      const user = userEvent.setup()
+      await renderContact()
+
+      expect(screen.queryByLabelText(/^Votre message/)).toBeNull()
+      await user.click(
+        await screen.findByRole('button', { name: 'Contacter le vendeur' }),
+      )
+
+      expect(screen.getByLabelText(/^Votre pseudo/)).toBeInTheDocument()
+      expect(screen.getByLabelText(/^Votre email/)).toBeInTheDocument()
+      expect(screen.getByLabelText(/^Votre message/)).toBeInTheDocument()
+    })
+
+    it('replaces the form with a confirmation once sent', async () => {
+      const user = userEvent.setup()
+      await renderContact()
+
+      await ouvrirEtRemplir(user)
+      await user.click(envoyer())
+
+      expect(
+        await screen.findByText('Votre message a été envoyé au vendeur.'),
+      ).toBeInTheDocument()
+      expect(screen.queryByLabelText(/^Votre message/)).toBeNull()
+      expect(
+        screen.queryByRole('button', { name: 'Contacter le vendeur' }),
+      ).toBeNull()
+    })
+
+    it('shows a too short message under its field and sends nothing', async () => {
+      const user = userEvent.setup()
+      await renderContact()
+
+      await ouvrirEtRemplir(user, 'court')
+      await user.click(envoyer())
+
+      expect(
+        await screen.findByText(
+          'Le message doit comporter de 10 à 2 000 caractères',
+        ),
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByText('Votre message a été envoyé au vendeur.'),
+      ).toBeNull()
+    })
+
+    it('shows the send failure above the form and keeps what was typed', async () => {
+      const user = userEvent.setup()
+      await renderContact({ envoiImpossible: true })
+
+      await ouvrirEtRemplir(user)
+      await user.click(envoyer())
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        "Votre message n'a pas pu être envoyé, réessayez plus tard.",
+      )
+      expect(screen.getByLabelText(/^Votre message/)).toHaveValue(
+        'Est-il toujours disponible ?',
+      )
+      expect(envoyer()).toBeInTheDocument()
+    })
   })
 })

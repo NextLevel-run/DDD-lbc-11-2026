@@ -172,3 +172,18 @@ func TestServer_ListsTheRegions(t *testing.T) {
 	require.Equal(t, http.StatusOK, getJSON(t, server, "/regions", &regions))
 	assert.Len(t, regions, 18)
 }
+
+func TestServer_ContactEmailsTheVendeurWithTheAcheteurAsReplyTo(t *testing.T) {
+	server, spy, demoIDs := startServer(t, true)
+	require.NotEmpty(t, demoIDs)
+
+	resp := postJSON(t, server, "/annonces/"+demoIDs[0]+"/contact",
+		`{"pseudo": "acheteur42", "email": "acheteur@example.com", "message": "Est-il toujours disponible ?"}`)
+
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	sent := spy.GetSentEmails()
+	require.Len(t, sent, 1, "the contact email is sent synchronously")
+	assert.Equal(t, "noreply@seconde-main.local", sent[0].From)
+	assert.Equal(t, "acheteur@example.com", sent[0].ReplyTo)
+	assert.Contains(t, sent[0].Body, frontendURL+"/annonces/"+demoIDs[0])
+}

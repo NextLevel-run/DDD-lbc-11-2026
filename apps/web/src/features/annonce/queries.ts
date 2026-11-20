@@ -2,6 +2,7 @@ import { mutationOptions, queryOptions } from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
 import type {
   AnnonceGateway,
+  ContacterArgs,
   CriteresRecherche,
   DeposerAnnonceArgs,
   SupprimerAnnonceArgs,
@@ -48,4 +49,10 @@ export const supprimerAnnonceMutationOptions = (
   mutationOptions({
     mutationFn: (args: SupprimerAnnonceArgs) => gateway.supprimerAnnonce(args),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['annonces'] }),
+  })
+
+// A contact keeps nothing: no read goes stale.
+export const contacterMutationOptions = (gateway: AnnonceGateway) =>
+  mutationOptions({
+    mutationFn: (args: ContacterArgs) => gateway.contacter(args),
   })

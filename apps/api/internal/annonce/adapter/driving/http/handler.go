@@ -19,6 +19,7 @@ type Handler struct {
 	listerRegions      query.ListerRegionsQuery
 	deposerAnnonce     command.DeposerAnnonceCommand
 	supprimerAnnonce   command.SupprimerAnnonceCommand
+	contacter          command.ContacterCommand
 }
 
 func NewHandler(
@@ -27,6 +28,7 @@ func NewHandler(
 	listerRegions query.ListerRegionsQuery,
 	deposerAnnonce command.DeposerAnnonceCommand,
 	supprimerAnnonce command.SupprimerAnnonceCommand,
+	contacter command.ContacterCommand,
 ) *Handler {
 	return &Handler{
 		consulterAnnonce:   consulterAnnonce,
@@ -34,6 +36,7 @@ func NewHandler(
 		listerRegions:      listerRegions,
 		deposerAnnonce:     deposerAnnonce,
 		supprimerAnnonce:   supprimerAnnonce,
+		contacter:          contacter,
 	}
 }
 
@@ -43,6 +46,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /annonces/{id}", h.ConsulterAnnonce)
 	mux.HandleFunc("POST /annonces", h.DeposerAnnonce)
 	mux.HandleFunc("POST /annonces/{id}/suppression", h.SupprimerAnnonce)
+	mux.HandleFunc("POST /annonces/{id}/contact", h.Contacter)
 	mux.HandleFunc("GET /regions", h.ListerRegions)
 }
 
@@ -111,6 +115,29 @@ func (h *Handler) SupprimerAnnonce(w http.ResponseWriter, r *http.Request) {
 		ID:         r.PathValue("id"),
 		MotDePasse: req.MotDePasse,
 		Raison:     req.Raison,
+	})
+	if err != nil {
+		respondDomainError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// Contacter handles POST /annonces/{id}/contact: 204 once the vendeur has
+// been emailed, 400 naming pseudo, email or message, 404 when the annonce is
+// unknown or not activee, 502 when the email could not leave.
+func (h *Handler) Contacter(w http.ResponseWriter, r *http.Request) {
+	var req ContacterRequest
+	r.Body = http.MaxBytesReader(w, r.Body, maxDepotBytes)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respond(w, http.StatusBadRequest, ErreurResponse{Erreur: "Requête invalide"})
+		return
+	}
+	err := h.contacter(command.ContacterCommandArgs{
+		ID:      r.PathValue("id"),
+		Pseudo:  req.Pseudo,
+		Email:   req.Email,
+		Message: req.Message,
 	})
 	if err != nil {
 		respondDomainError(w, err)
@@ -240,11 +267,12 @@ var invalidFields = []struct {
 	{domain.ErrMotDePasseIncorrect, "motDePasse", "Le mot de passe de l'annonce est incorrect"},
 	{domain.ErrRaisonSuppressionInvalide, "raison", "Choisissez une raison de suppression"},
 	{domain.ErrTelephoneInvalide, "telephone", "Le téléphone doit comporter 10 chiffres et commencer par 0"},
+	{domain.ErrMessageInvalide, "message", "Le message doit comporter de 10 à 2 000 caractères"},
 }
 
-// respondDomainError maps a domain error to its status code and a French
-// message: a validation error is a 400 naming its field. Anything else is a
-// 500 whose detail stays in the logs.
+// respondDomainError maps a domain or application error to its status code
+// and a French message: a validation error is a 400 naming its field. Anything
+// else is a 500 whose detail stays in the logs.
 func respondDomainError(w http.ResponseWriter, err error) {
 	for _, f := range invalidFields {
 		if errors.Is(err, f.err) {
@@ -257,6 +285,9 @@ func respondDomainError(w http.ResponseWriter, err error) {
 		respond(w, http.StatusNotFound, ErreurResponse{Erreur: "Annonce introuvable"})
 	case errors.Is(err, domain.ErrIDAnnonceInvalide):
 		respond(w, http.StatusBadRequest, ErreurResponse{Erreur: "Identifiant d'annonce invalide"})
+	case errors.Is(err, command.ErrEnvoiImpossible):
+		log.Printf("annonce: %v", err)
+		respond(w, http.StatusBadGateway, ErreurResponse{Erreur: "Votre message n'a pas pu être envoyé, réessayez plus tard."})
 	default:
 		log.Printf("annonce: unexpected error: %v", err)
 		respond(w, http.StatusInternalServerError, ErreurResponse{Erreur: "Erreur interne"})
