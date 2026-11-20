@@ -5,7 +5,7 @@ Shared grounding for coding agents working on this repository: a pedagogical sec
 ## Stack
 
 - **Monorepo** — `apps/api` and `apps/web`, driven by the root `Makefile`.
-- **API** (`apps/api`) — Go, standard library HTTP server, one bounded context per folder under `internal/`, in-memory adapters only (no database).
+- **API** (`apps/api`) — Go, standard library HTTP server, one bounded context per folder under `internal/bounded-context/`, in-memory adapters only (no database).
 - **E2E** (`apps/e2e`) — Playwright suite on the real stack, on its own ports (API 18080, frontend 13000), with Mailcatcher.
 - **Frontend** (`apps/web`) — TanStack Start (React 19, file-based routes), TanStack Query and Form, Tailwind CSS, Vitest + Testing Library, pnpm.
 
@@ -49,7 +49,7 @@ The team models in French, so the business vocabulary stays in French everywhere
 
 | Domain term | In code |
 | --- | --- |
-| Annonce | `Annonce`, `NewAnnonce`, `AnnonceRepository`, `internal/annonce/` |
+| Annonce | `Annonce`, `NewAnnonce`, `AnnonceRepository`, `internal/bounded-context/annonce/` |
 | Déposer annonce | `DeposerAnnonceCommand`, `deposer_annonce.go`, `POST /annonces` |
 | Annonce déposée | `AnnonceDeposeeEvent`, type `"AnnonceDeposee"` |
 | a business failure | `ErrTitreVide`, `ErrAnnonceIntrouvable` |
@@ -57,10 +57,10 @@ The team models in French, so the business vocabulary stays in French everywhere
 ## Contribution rules
 
 - **Ask before coding.** Clarify the requirement first; the `grill-me` skill does it thoroughly.
-- **Read the local `AGENTS.md` before editing a module**: `apps/api/`, `apps/web/`, and each bounded context under `apps/api/internal/`.
+- **Read the local `AGENTS.md` before editing a module**: `apps/api/`, `apps/web/`, and each bounded context under `apps/api/internal/bounded-context/`.
 - **Use the matching skill**: `tactical-ddd` for the API, `frontend-development` for the frontend, `scaffold-bc` for a new bounded context.
 - **Dependencies point inward**, in both apps: adapters depend on the application and the domain, never the reverse. The domain imports no framework and no adapter.
-- **One bounded context never imports another.** They talk through events.
+- **One bounded context never imports another.** They talk through events and share only `internal/contracts`.
 - **Test on in-memory adapters**, in both apps. No mock of `fetch`, no mocking library for ports.
 - **Mind the language split** above: French for the domain, English for the rest.
 - **Secrets**: never commit a `.env`.

@@ -15,7 +15,7 @@ Commands orchestrate domain objects without containing business logic themselves
 
 ### File Location
 ```
-internal/{bounded-context}/application/command/{action}.go
+internal/bounded-context/{name}/application/command/{action}.go
 ```
 
 ### Structure
@@ -205,7 +205,7 @@ func BuildNotifyCustomerCommand(
 
 ### Test File Location
 ```
-internal/{bounded-context}/application/command/{action}_test.go
+internal/bounded-context/{name}/application/command/{action}_test.go
 ```
 
 ### Test Setup Pattern

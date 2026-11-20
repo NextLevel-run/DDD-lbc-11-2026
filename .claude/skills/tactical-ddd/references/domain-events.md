@@ -13,7 +13,7 @@ Events enable:
 
 ### File Location
 ```
-internal/{bounded-context}/domain/event.go
+internal/bounded-context/{name}/domain/event.go
 ```
 
 ### Interface (from pkg/eventbus)
@@ -130,6 +130,40 @@ func (e *CustomerNotifiedEvent) EventType() string {
     return e.eventType
 }
 ```
+
+## Events that cross a context boundary
+
+A domain event is read by the code of its own context. As soon as another bounded context reads it, it is a **contract**: declare it once in `internal/contracts`, as plain data, and let both contexts import that package. Never import the other context, and never redeclare its event type or its fields behind a local interface: a renamed accessor would drop the event silently.
+
+```go
+// internal/contracts/annonce.go: standard library only, no behavior
+
+const AnnonceDeposeeEventType = "AnnonceDeposee"
+
+type AnnonceDeposeeEvent struct {
+    Annonce InstantaneAnnonce // primitives only
+    Date    time.Time
+}
+
+func (AnnonceDeposeeEvent) EventType() string { return AnnonceDeposeeEventType }
+```
+
+The producer builds the contract in its **command**, from the aggregate, once the change is persisted: the domain imports no project package. The consumer asserts the concrete value:
+
+```go
+// producer, in application/command
+bus.Publish(contracts.AnnonceDeposeeEvent{Annonce: instantaneAnnonce(annonce), Date: now})
+
+// consumer, in adapter/driving/consumer
+e, ok := event.(contracts.AnnonceDeposeeEvent)
+```
+
+Rules:
+
+- Carry only what a reader needs, and never personal data (email, telephone, mot de passe): a consumer that needs more loads it from its own context by ID.
+- An event-sourced context keeps the events of its stream private (the storage format) and publishes the matching contract after the append.
+- Changing a contract changes both contexts: change them together, in the same commit.
+- `internal/architecture` fails the tests if a context imports another, or if `internal/contracts` imports more than the standard library.
 
 ## Naming Conventions
 

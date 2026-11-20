@@ -22,7 +22,7 @@ Every aggregate root maintains a **version** number (starting at 1) that increme
 
 ### File Location
 ```
-internal/{bounded-context}/domain/{aggregate}.go
+internal/bounded-context/{name}/domain/{aggregate}.go
 ```
 
 ### Structure
@@ -323,7 +323,7 @@ func (a Address) Country() string    { return a.country }
 
 ### File Location
 ```
-internal/{bounded-context}/domain/{aggregate}_test.go
+internal/bounded-context/{name}/domain/{aggregate}_test.go
 ```
 
 ### Test Pattern

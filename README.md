@@ -54,7 +54,7 @@ SMTP_ADDR=localhost:1025 make dev-api  # the API sends to it
 ## Layout
 
 ```
-apps/api/         Go API: one bounded context per folder under internal/
+apps/api/         Go API: one bounded context per folder under internal/bounded-context/
 apps/web/         TanStack Start frontend: one folder per feature under src/features/
 documentation/    glossary/ (domain + technical), specs/, tickets/
 prompts/          prompts worth keeping
@@ -85,7 +85,7 @@ flowchart TB
   subgraph api["apps/api · Go · :8080"]
     direction LR
     apiroot["Composition root<br/>cmd/api/main.go<br/>GET /health"]
-    subgraph bc["internal/annonce"]
+    subgraph bc["internal/bounded-context/annonce"]
       direction TB
       driving["Driving adapters<br/>HTTP handler, consumer"]
       app["Application<br/>commands, queries"]

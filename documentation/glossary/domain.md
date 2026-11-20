@@ -17,7 +17,7 @@ la parenthèse seulement si le nom diffère.
 - **Annonce** — un bien qu'un vendeur met en vente.
 - **Vendeur** — la personne qui dépose une annonce, sans compte.
 - **Acheteur** — la personne qui recherche et consulte des annonces.
-- **Annonce déposée** (`AnnonceDeposee`) — l'événement d'un dépôt ; il déclenche l'email de confirmation de dépôt et alimentera la modération.
+- **Annonce déposée** (`AnnonceDeposee`) — l'événement d'un dépôt ; il déclenche l'email de confirmation de dépôt et la mise en file de modération.
 - **En attente de modération** (`EnAttenteModeration`) — statut d'une annonce déposée : invisible partout, jusqu'à sa validation.
 - **Annonce challengée** (`Challengee`) — la modération demande une correction au vendeur, avec un motif ; l'annonce reste invisible.
 - **Annonce corrigée** (`AnnonceCorrigee`) — le vendeur a corrigé son annonce challengée avec son mot de passe ; elle repasse en attente de modération.

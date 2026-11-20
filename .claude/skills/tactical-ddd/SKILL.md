@@ -70,21 +70,25 @@ To locate specific patterns in reference files:
 
 ```
 internal/
-└── {bounded-context}/
-    ├── domain/               # Pure business logic
-    │   ├── {aggregate}.go   # Aggregate roots
-    │   ├── repository.go    # Repository interfaces (ports)
-    │   └── event.go         # Domain events
-    ├── application/          # Use cases
-    │   ├── command/         # Write operations
-    │   └── query/           # Read operations
-    └── adapter/             # Infrastructure
-        ├── driven/          # Outbound (repositories)
-        │   └── inmemory/
-        └── driving/         # Inbound (HTTP, consumers)
-            ├── http/
-            └── consumer/
+├── bounded-context/
+│   └── {name}/
+│       ├── domain/               # Pure business logic
+│       │   ├── {aggregate}.go   # Aggregate roots
+│       │   ├── repository.go    # Repository interfaces (ports)
+│       │   └── event.go         # Domain events
+│       ├── application/          # Use cases
+│       │   ├── command/         # Write operations
+│       │   └── query/           # Read operations
+│       └── adapter/             # Infrastructure
+│           ├── driven/          # Outbound (repositories)
+│           │   └── inmemory/
+│           └── driving/         # Inbound (HTTP, consumers)
+│               ├── http/
+│               └── consumer/
+└── contracts/                    # Events that cross a context boundary: plain structs
 ```
+
+**A bounded context never imports another.** What two contexts exchange is declared once in `internal/contracts`, and both import only that package. See [domain-events.md](references/domain-events.md#events-that-cross-a-context-boundary). `internal/architecture` fails the tests on a cross-context import.
 
 > **Note**: Each module represents a **subdomain** (problem space) implemented as a **bounded context** (solution space). Subdomains are business segments (Core, Supporting, Generic), while bounded contexts are the technical boundaries where a ubiquitous language applies. In this project, there's a 1:1 mapping between them.
 
@@ -102,6 +106,7 @@ internal/
 | Command | Infinitive + Noun + "Command" | `DeposerAnnonceCommand` |
 | Event struct | Noun + past participle + "Event" | `AnnonceDeposeeEvent` |
 | Event type | Same, as a string | `"AnnonceDeposee"` |
+| Contract (event read by another context) | Same name, in `internal/contracts` | `contracts.AnnonceDeposeeEvent` |
 | Repository | AggregateRoot + "Repository" | `AnnonceRepository` |
 | View/Presenter | AggregateRoot + "View" | `AnnonceView` |
 | File | `snake_case` | `annonce.go`, `deposer_annonce.go` |
@@ -122,6 +127,7 @@ Follow these steps in order when implementing a new feature:
 - Define event struct in `domain/event.go` with past-tense naming
 - Implement `EventType() string` method
 - Create convenience constructor `New{Event}From{Entity}()`
+- If another bounded context reads the event, it is not a domain event of this context: declare it in `internal/contracts`, built and published by the command (see [domain-events.md](references/domain-events.md#events-that-cross-a-context-boundary))
 
 ### Step 3: Build Command or Query
 - For writes: Read [application-commands.md](references/application-commands.md)

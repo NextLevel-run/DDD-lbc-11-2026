@@ -15,7 +15,7 @@ Queries translate domain entities into **view models** appropriate for the consu
 
 ### File Location
 ```
-internal/{bounded-context}/application/query/{query_name}.go
+internal/bounded-context/{name}/application/query/{query_name}.go
 ```
 
 ### Single Item Query
@@ -253,7 +253,7 @@ type OrderListItem struct {
 
 ### Test File Location
 ```
-internal/{bounded-context}/application/query/{query_name}_test.go
+internal/bounded-context/{name}/application/query/{query_name}_test.go
 ```
 
 ### Test Setup

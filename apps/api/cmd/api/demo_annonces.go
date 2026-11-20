@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"ddd-second-hand-marketplace/internal/annonce/domain"
+	"ddd-second-hand-marketplace/internal/bounded-context/annonce/domain"
 )
 
 // motDePasseDemo is the mot de passe of every demo annonce.

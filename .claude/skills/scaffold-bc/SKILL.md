@@ -18,7 +18,7 @@ bash .claude/skills/scaffold-bc/scripts/scaffold-bc.sh <bounded-context-name>
 It creates:
 
 ```
-apps/api/internal/<bounded-context-name>/
+apps/api/internal/bounded-context/<bounded-context-name>/
 ├── AGENTS.md              # Five empty sections, see below
 ├── domain/                # Aggregates, value objects, events, ports
 ├── application/
@@ -35,7 +35,8 @@ apps/api/internal/<bounded-context-name>/
 
 1. Add the bounded context to the domain map of `documentation/glossary/domain.md`.
 2. Fill the two-line role at the top of the generated `AGENTS.md`. Leave the other sections empty until there is something non-obvious to write: the file holds what the code does not say, never an inventory of it.
-3. Implement with the `tactical-ddd` skill.
+3. If the new context exchanges events with another one, declare them in `apps/api/internal/contracts` and import only that package: a bounded context never imports another. `apps/api/internal/architecture` fails the tests if it does.
+4. Implement with the `tactical-ddd` skill.
 
 ## Naming Conventions
 

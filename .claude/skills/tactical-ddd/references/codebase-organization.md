@@ -7,32 +7,35 @@ project-root/
 ├── cmd/
 │   └── api/
 │       └── main.go              # Application entry point, DI wiring
-├── internal/                    # Private application code
-│   └── {bounded-context}/       # One directory per bounded context
-│       ├── domain/              # Pure business logic
-│       │   ├── {entity}.go      # Aggregates and entities
-│       │   ├── repository.go    # Repository interfaces (ports)
-│       │   └── event.go         # Domain events
-│       ├── application/         # Use cases
-│       │   ├── command/         # Write operations
-│       │   │   ├── place_order.go
-│       │   │   ├── place_order_test.go
-│       │   │   └── ...
-│       │   └── query/           # Read operations
-│       │       ├── get_order.go
-│       │       ├── get_order_test.go
-│       │       └── ...
-│       └── adapter/             # Infrastructure implementations
-│           ├── driven/          # Outbound adapters
-│           │   └── inmemory/    # In-memory implementations
-│           │       └── repository.go
-│           └── driving/         # Inbound adapters
-│               ├── http/        # HTTP handlers
-│               │   ├── handler.go
-│               │   ├── dto.go
-│               │   └── handler_test.go
-│               └── consumer/    # Event consumers
-│                   └── confirmation_email_consumer.go
+├── internal/                          # Private application code
+│   ├── contracts/                     # Events that cross a context boundary: plain structs
+│   ├── architecture/                  # Tests of the dependency rules
+│   └── bounded-context/
+│       └── {name}/                    # One directory per bounded context
+│           ├── domain/                # Pure business logic
+│           │   ├── {entity}.go        # Aggregates and entities
+│           │   ├── repository.go      # Repository interfaces (ports)
+│           │   └── event.go           # Domain events
+│           ├── application/           # Use cases
+│           │   ├── command/           # Write operations
+│           │   │   ├── place_order.go
+│           │   │   ├── place_order_test.go
+│           │   │   └── ...
+│           │   └── query/             # Read operations
+│           │       ├── get_order.go
+│           │       ├── get_order_test.go
+│           │       └── ...
+│           └── adapter/               # Infrastructure implementations
+│               ├── driven/            # Outbound adapters
+│               │   └── inmemory/      # In-memory implementations
+│               │       └── repository.go
+│               └── driving/           # Inbound adapters
+│                   ├── http/          # HTTP handlers
+│                   │   ├── handler.go
+│                   │   ├── dto.go
+│                   │   └── handler_test.go
+│                   └── consumer/      # Event consumers
+│                       └── confirmation_email_consumer.go
 ├── pkg/                         # Public shared libraries
 │   ├── eventbus/               # Event bus infrastructure
 │   │   ├── eventbus.go         # Interface
@@ -88,7 +91,11 @@ func main() {
 
 Code that should not be imported by other projects.
 
-### `internal/{context}/domain/` - Business Logic
+### `internal/contracts/` - What Contexts Share
+
+The events that cross a bounded context boundary, as plain structs and `…EventType` constants. Standard library only, no behavior. It is the only package two contexts have in common: see [domain-events.md](domain-events.md#events-that-cross-a-context-boundary).
+
+### `internal/bounded-context/{name}/domain/` - Business Logic
 
 Pure domain logic with no external dependencies.
 
@@ -98,7 +105,7 @@ Pure domain logic with no external dependencies.
 | `repository.go` | Repository interfaces (ports) |
 | `event.go` | Domain events |
 
-### `internal/{context}/application/` - Use Cases
+### `internal/bounded-context/{name}/application/` - Use Cases
 
 Orchestration layer using CQRS pattern.
 
@@ -107,7 +114,7 @@ Orchestration layer using CQRS pattern.
 | `command/` | Write operations (modify state) |
 | `query/` | Read operations (read state) |
 
-### `internal/{context}/adapter/` - Infrastructure
+### `internal/bounded-context/{name}/adapter/` - Infrastructure
 
 Implementations of ports and external interfaces.
 
@@ -172,7 +179,7 @@ See [pkg-infrastructure.md](pkg-infrastructure.md) for details.
 │  (can import domain, pkg)                            │
 ├──────────────────────────────────────────────────────┤
 │                      DOMAIN                          │
-│  (can import pkg interfaces only)                    │
+│  (standard library only)                             │
 ├──────────────────────────────────────────────────────┤
 │                       PKG                            │
 │  (no internal imports)                               │
@@ -193,9 +200,6 @@ import "project/internal/order/domain"
 
 // application → pkg ✓
 import "project/pkg/eventbus"
-
-// domain → pkg (interface only) ✓
-import "project/pkg/eventbus"  // Only for DomainEvent interface
 ```
 
 ### Invalid Imports
@@ -207,12 +211,34 @@ import "project/internal/order/adapter/driven/inmemory"
 // domain → application ✗
 import "project/internal/order/application/command"
 
+// domain → pkg ✗ (a domain event satisfies eventbus.DomainEvent without importing it)
+import "project/pkg/eventbus"
+
 // application → adapter ✗
 import "project/internal/order/adapter/driven/inmemory"
 
 // pkg → internal ✗
-import "project/internal/order/domain"
+import "project/internal/bounded-context/order/domain"
 ```
+
+### Between Bounded Contexts
+
+Two contexts never import each other. What they exchange lives in `internal/contracts`, and each imports only that package.
+
+```go
+// order consumer → contract ✓
+import "project/internal/contracts"
+
+// contract → standard library only ✓ (no pkg, no context)
+
+// order → stock ✗ (any package of another bounded context)
+import "project/internal/bounded-context/stock/domain"
+
+// contract → a context, or pkg ✗
+import "project/internal/bounded-context/order/domain"
+```
+
+`internal/architecture` checks these rules on every `go test`.
 
 ## Adding a New Feature
 
@@ -273,7 +299,7 @@ shipOrderCommand := command.BuildShipOrderCommand(repo, eventBus)
 {file}_test.go      # Tests in same package
 
 # Test utilities
-internal/{context}/adapter/driven/inmemory/  # Reusable test doubles
+internal/bounded-context/{name}/adapter/driven/inmemory/  # Reusable test doubles
 pkg/{concept}/testing/                        # Infrastructure test utilities
 ```
 

@@ -6,16 +6,16 @@ import (
 	"net/http"
 	"time"
 
-	annonceinmemory "ddd-second-hand-marketplace/internal/annonce/adapter/driven/inmemory"
-	annonceconsumer "ddd-second-hand-marketplace/internal/annonce/adapter/driving/consumer"
-	annoncehttp "ddd-second-hand-marketplace/internal/annonce/adapter/driving/http"
-	annoncecommand "ddd-second-hand-marketplace/internal/annonce/application/command"
-	annoncequery "ddd-second-hand-marketplace/internal/annonce/application/query"
-	moderationinmemory "ddd-second-hand-marketplace/internal/moderation/adapter/driven/inmemory"
-	moderationconsumer "ddd-second-hand-marketplace/internal/moderation/adapter/driving/consumer"
-	moderationhttp "ddd-second-hand-marketplace/internal/moderation/adapter/driving/http"
-	moderationcommand "ddd-second-hand-marketplace/internal/moderation/application/command"
-	moderationquery "ddd-second-hand-marketplace/internal/moderation/application/query"
+	annonceinmemory "ddd-second-hand-marketplace/internal/bounded-context/annonce/adapter/driven/inmemory"
+	annonceconsumer "ddd-second-hand-marketplace/internal/bounded-context/annonce/adapter/driving/consumer"
+	annoncehttp "ddd-second-hand-marketplace/internal/bounded-context/annonce/adapter/driving/http"
+	annoncecommand "ddd-second-hand-marketplace/internal/bounded-context/annonce/application/command"
+	annoncequery "ddd-second-hand-marketplace/internal/bounded-context/annonce/application/query"
+	moderationinmemory "ddd-second-hand-marketplace/internal/bounded-context/moderation/adapter/driven/inmemory"
+	moderationconsumer "ddd-second-hand-marketplace/internal/bounded-context/moderation/adapter/driving/consumer"
+	moderationhttp "ddd-second-hand-marketplace/internal/bounded-context/moderation/adapter/driving/http"
+	moderationcommand "ddd-second-hand-marketplace/internal/bounded-context/moderation/application/command"
+	moderationquery "ddd-second-hand-marketplace/internal/bounded-context/moderation/application/query"
 	"ddd-second-hand-marketplace/pkg/eventbus"
 	"ddd-second-hand-marketplace/pkg/mailer"
 )
@@ -51,7 +51,7 @@ func newServer(cfg serverConfig) (http.Handler, []string, error) {
 		demoIDs = ids
 	}
 	if err := annonceconsumer.SubscribeConfirmationDepot(eventBus, annoncecommand.BuildEnvoyerConfirmationDepotCommand(
-		cfg.Mailer, "noreply@seconde-main.local", cfg.FrontendURL,
+		annonceRepository, cfg.Mailer, "noreply@seconde-main.local", cfg.FrontendURL,
 	)); err != nil {
 		return nil, nil, fmt.Errorf("consumer: %w", err)
 	}
@@ -82,9 +82,9 @@ func newServer(cfg serverConfig) (http.Handler, []string, error) {
 		annoncecommand.BuildCorrigerAnnonceCommand(annonceRepository, eventBus, time.Now),
 	).RegisterRoutes(mux)
 
-	// Bounded context: moderation. It reads AnnonceDeposee through a local
-	// interface and never imports annonce; annonce reads its decisions the same
-	// way.
+	// Bounded context: moderation. It reads AnnonceDeposee and AnnonceCorrigee
+	// from internal/contracts and never imports annonce; annonce reads its
+	// decisions the same way.
 	historiqueRepository := moderationinmemory.NewInMemoryHistoriqueAnnonceRepository()
 	if err := moderationconsumer.SubscribeMiseEnFile(eventBus, moderationcommand.BuildMettreEnFileCommand(
 		historiqueRepository, time.Now,

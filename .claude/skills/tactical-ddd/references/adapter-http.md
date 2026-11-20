@@ -15,7 +15,7 @@ HTTP handlers are thin translation layers - no business logic.
 
 ### File Structure
 ```
-internal/{bounded-context}/adapter/driving/http/
+internal/bounded-context/{name}/adapter/driving/http/
 ├── handler.go     # Handler struct and methods
 ├── dto.go         # Request/Response DTOs
 └── handler_test.go

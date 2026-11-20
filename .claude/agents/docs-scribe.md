@@ -21,7 +21,7 @@ You keep three kinds of files in sync with the code, and as short as they can be
 
 - `documentation/glossary/domain.md` — the ubiquitous language;
 - `documentation/glossary/technical.md` — the architecture and tooling vocabulary;
-- the `AGENTS.md` of each module (`apps/api/internal/<bounded-context>/`, `apps/api/`, `apps/web/`).
+- the `AGENTS.md` of each module (`apps/api/internal/bounded-context/<name>/`, `apps/api/`, `apps/web/`).
 
 Agents load the glossaries in every session and read a module's `AGENTS.md` before touching it. Every line you add costs context in all of those sessions: write a line only if an agent would get something wrong without it.
 

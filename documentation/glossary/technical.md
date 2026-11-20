@@ -5,7 +5,7 @@ repository, not its textbook definition nor what the code shows. Format: `- **Te
 
 ## Design
 
-- **Bounded context** — one model and its language; in the API, one folder under `internal/`, one per subdomain.
+- **Bounded context** — one model and its language; in the API, one folder under `internal/bounded-context/`, one per subdomain.
 - **Module** — a folder with its own `AGENTS.md`: an app or a bounded context.
 
 ## API: hexagonal architecture
@@ -40,6 +40,7 @@ repository, not its textbook definition nor what the code shows. Format: `- **Te
 
 - **Event bus** — delivers domain events to their subscribed consumers, synchronously or asynchronously.
 - **Event collector** — a test helper that records the events a bus received.
+- **Contracts** — `internal/contracts`: the events that cross a context boundary, as plain data; the only code two contexts share.
 - **Mailer** — the port for sending an email: SMTP (Mailcatcher in dev), fake (logs) or spy (tests).
 
 ## Frontend

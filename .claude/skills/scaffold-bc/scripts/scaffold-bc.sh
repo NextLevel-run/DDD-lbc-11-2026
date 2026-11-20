@@ -14,7 +14,7 @@ fi
 
 BC_NAME="$1"
 REPO_ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
-BASE_DIR="${REPO_ROOT}/apps/api/internal/${BC_NAME}"
+BASE_DIR="${REPO_ROOT}/apps/api/internal/bounded-context/${BC_NAME}"
 
 if [ -d "$BASE_DIR" ]; then
     echo "Error: Directory ${BASE_DIR} already exists"
@@ -43,13 +43,13 @@ cat > "${BASE_DIR}/AGENTS.md" << TEMPLATE
 
 ## Language
 
-Shared terms: [\`domain.md\`](../../../../documentation/glossary/domain.md), [\`technical.md\`](../../../../documentation/glossary/technical.md).
+Shared terms: [\`domain.md\`](../../../../../documentation/glossary/domain.md), [\`technical.md\`](../../../../../documentation/glossary/technical.md).
 
 <!-- Only the terms local to this bounded context, one line each. -->
 
 ## Boundaries
 
-<!-- Who calls it; public events consumed and produced. -->
+<!-- Who calls it; public events consumed and produced (the events another context reads live in internal/contracts). -->
 
 ## Flows
 
@@ -60,4 +60,4 @@ Shared terms: [\`domain.md\`](../../../../documentation/glossary/domain.md), [\`
 <!-- The rules an agent would break without knowing them. Nothing the code already says. -->
 TEMPLATE
 
-echo "Bounded context '${BC_NAME}' created at apps/api/internal/${BC_NAME}"
+echo "Bounded context '${BC_NAME}' created at apps/api/internal/bounded-context/${BC_NAME}"

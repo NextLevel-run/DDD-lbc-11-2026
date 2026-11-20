@@ -15,7 +15,7 @@ Consumers bridge the gap between events and reactions.
 
 ### File Location
 ```
-internal/{bounded-context}/adapter/driving/consumer/{consumer_name}.go
+internal/bounded-context/{name}/adapter/driving/consumer/{consumer_name}.go
 ```
 
 ### Simple Logging Consumer
@@ -120,6 +120,28 @@ func NewInventoryConsumer(eventBus eventbus.Bus, inventory InventoryService) err
     })
 }
 ```
+
+## Consumer of Another Bounded Context's Events
+
+A consumer reacts to an event of its own context by asserting its domain event, as above. For an event published by **another** context, it asserts the contract of `internal/contracts`, never a type of the other context and never a local interface with its own copy of the accessors:
+
+```go
+import "ddd-second-hand-marketplace/internal/contracts"
+
+func SubscribeAnnonceValidee(bus eventbus.Bus, activer command.ActiverAnnonceCommand) error {
+    return bus.Subscribe(contracts.AnnonceValideeEventType, func(evt eventbus.DomainEvent) error {
+        e, ok := evt.(contracts.AnnonceValideeEvent)
+        if !ok {
+            return nil
+        }
+        // the contract carries an ID: load what else is needed from this context
+        _, err := activer(e.AnnonceID)
+        return err
+    })
+}
+```
+
+The event type is the constant of the contract, not a string written again. See [domain-events.md](domain-events.md#events-that-cross-a-context-boundary). In a test, publish the contract value itself on the bus.
 
 ## Key Principles
 

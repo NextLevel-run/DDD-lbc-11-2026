@@ -13,7 +13,7 @@ The domain defines WHAT it needs; adapters decide HOW to provide it.
 
 ### File Location
 ```
-internal/{bounded-context}/domain/repository.go
+internal/bounded-context/{name}/domain/repository.go
 ```
 
 ### Interface Pattern
@@ -56,7 +56,7 @@ type OrderRepository interface {
 
 ### File Location
 ```
-internal/{bounded-context}/adapter/driven/inmemory/repository.go
+internal/bounded-context/{name}/adapter/driven/inmemory/repository.go
 ```
 
 ### In-Memory Implementation
