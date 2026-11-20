@@ -28,7 +28,7 @@ Shared terms: [`domain.md`](../../../../documentation/glossary/domain.md), [`tec
 
 ## Invariants and pitfalls
 
-- **A view never exposes the vendeur's email or telephone**: only the pseudo leaves the domain.
+- **Acheteurs never see the vendeur's email or telephone, only the pseudo**: no view, no JSON response carries them. Events may (`AnnonceDeposee`): they stay inside the API.
 - **The mot de passe never appears** in a view, an event, a log or a JSON response; `Annonce.MotDePasseCorrespond` is the only question asked. Demo annonces all use `demo1234`.
 - **The confirmation email never contains the mot de passe**, only the sentence that the suppression will ask for it.
 - **A non-activee annonce answers `ErrAnnonceIntrouvable`**, never a distinct error: its existence must not leak.

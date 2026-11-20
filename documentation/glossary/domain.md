@@ -20,3 +20,4 @@ la parenthèse seulement si le nom diffère.
 - **Mot de passe de l'annonce** (`MotDePasse`) — choisi par le vendeur au dépôt (8 caractères minimum), conservé haché ; il autorisera la suppression.
 - **Annonce supprimée** (`AnnonceSupprimee`) — le vendeur a retiré son annonce avec son mot de passe ; statut `Supprimee`, elle n'est plus en ligne.
 - **Raison de suppression** (`RaisonSuppression`) — pourquoi le vendeur retire son annonce, un code d'une liste fermée ; seul l'événement la porte.
+- **Formulaire de contact soumis** (`FormulaireContactSoumis`) — un acheteur a écrit au vendeur d'une annonce ; le message lui est parti par mail.
