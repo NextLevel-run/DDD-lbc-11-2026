@@ -8,6 +8,7 @@ import (
 
 	"ddd-second-hand-marketplace/internal/annonce/application/command"
 	"ddd-second-hand-marketplace/internal/annonce/domain"
+	"ddd-second-hand-marketplace/pkg/mailer"
 	mailerspy "ddd-second-hand-marketplace/pkg/mailer/testing"
 )
 
@@ -34,13 +35,13 @@ func TestEnvoyerConfirmationDepot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sent := spy.GetSentSimpleEmails()
+	sent := spy.GetSentEmails()
 	if len(sent) != 1 {
 		t.Fatalf("want 1 email, got %d", len(sent))
 	}
 	m := sent[0]
-	if m.To != "marie@example.com" || m.From != "noreply@example.com" {
-		t.Errorf("to/from = %s/%s", m.To, m.From)
+	if m.To != "marie@example.com" || m.From != "noreply@example.com" || m.ReplyTo != "" {
+		t.Errorf("to/from/reply-to = %s/%s/%q", m.To, m.From, m.ReplyTo)
 	}
 	if m.Title != "Votre annonce « Vélo de ville » est en ligne" {
 		t.Errorf("title = %q", m.Title)
@@ -62,7 +63,7 @@ func TestEnvoyerConfirmationDepot(t *testing.T) {
 
 type failingMailer struct{}
 
-func (failingMailer) SendSimpleEmail(string, string, string, string) error {
+func (failingMailer) SendEmail(mailer.Email) error {
 	return errors.New("smtp down")
 }
 func (failingMailer) SendTemplatedEmail(string, string, string, map[string]any) error {

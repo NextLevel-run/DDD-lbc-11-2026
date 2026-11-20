@@ -28,6 +28,6 @@ Voir l'annonce : %s
 Pour la supprimer : %s/supprimer
 La suppression vous demandera le mot de passe que vous avez choisi au dépôt.
 `, annonce.Vendeur().Pseudo(), annonce.Titre(), lien, lien)
-		return m.SendSimpleEmail(annonce.Vendeur().Email(), fromEmail, titre, corps)
+		return m.SendEmail(mailer.Email{To: annonce.Vendeur().Email(), From: fromEmail, Title: titre, Body: corps})
 	}
 }

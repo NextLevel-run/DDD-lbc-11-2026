@@ -36,7 +36,7 @@ func TestConsumerSendsConfirmationOnAnnonceDeposee(t *testing.T) {
 	if err := bus.Publish(newEvent(t)); err != nil {
 		t.Fatal(err)
 	}
-	if n := len(spy.GetSentSimpleEmails()); n != 1 {
+	if n := len(spy.GetSentEmails()); n != 1 {
 		t.Fatalf("want 1 email, got %d", n)
 	}
 }

@@ -136,9 +136,9 @@ func TestServer_DepotSendsTheConfirmationEmailThroughTheEventBus(t *testing.T) {
 	}
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&created))
 
-	require.Eventually(t, func() bool { return len(spy.GetSentSimpleEmails()) == 1 },
+	require.Eventually(t, func() bool { return len(spy.GetSentEmails()) == 1 },
 		2*time.Second, 10*time.Millisecond, "the async bus delivers AnnonceDeposee to the consumer")
-	email := spy.GetSentSimpleEmails()[0]
+	email := spy.GetSentEmails()[0]
 	assert.Equal(t, "lyonnaise@example.com", email.To)
 	assert.Equal(t, "Votre annonce « Lampe de bureau articulée » est en ligne", email.Title)
 	assert.Contains(t, email.Body, frontendURL+"/annonces/"+created.ID)

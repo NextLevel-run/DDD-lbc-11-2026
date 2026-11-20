@@ -78,10 +78,10 @@ func receive(t *testing.T, received <-chan string) string {
 	}
 }
 
-func TestSMTPMailer_SendSimpleEmail(t *testing.T) {
+func TestSMTPMailer_SendEmail(t *testing.T) {
 	addr, received := smtpServer(t)
 
-	err := mailer.NewSMTPMailer(addr).SendSimpleEmail("bob@example.com", "shop@example.com", "Hello", "Your ad is online")
+	err := mailer.NewSMTPMailer(addr).SendEmail(mailer.Email{To: "bob@example.com", From: "shop@example.com", Title: "Hello", Body: "Your ad is online"})
 
 	require.NoError(t, err)
 	msg := receive(t, received)
@@ -89,6 +89,32 @@ func TestSMTPMailer_SendSimpleEmail(t *testing.T) {
 	assert.Contains(t, msg, "To: bob@example.com")
 	assert.Contains(t, msg, "Subject: Hello")
 	assert.Contains(t, msg, "Your ad is online")
+	assert.NotContains(t, msg, "Reply-To:", "no Reply-To header without ReplyTo")
+}
+
+func TestSMTPMailer_SendEmailWithReplyTo(t *testing.T) {
+	addr, received := smtpServer(t)
+
+	err := mailer.NewSMTPMailer(addr).SendEmail(mailer.Email{
+		To: "bob@example.com", From: "shop@example.com", ReplyTo: "alice@example.com", Title: "Hello", Body: "body",
+	})
+
+	require.NoError(t, err)
+	msg, err := mail.ReadMessage(strings.NewReader(receive(t, received)))
+	require.NoError(t, err)
+	assert.Equal(t, "alice@example.com", msg.Header.Get("Reply-To"))
+	assert.Equal(t, "shop@example.com", msg.Header.Get("From"))
+}
+
+func TestSMTPMailer_RefusesAnInvalidReplyTo(t *testing.T) {
+	addr, received := smtpServer(t)
+
+	err := mailer.NewSMTPMailer(addr).SendEmail(mailer.Email{
+		To: "bob@example.com", From: "shop@example.com", ReplyTo: "alice@example.com\r\nBcc: eve@example.com", Title: "Hello", Body: "body",
+	})
+
+	assert.Error(t, err)
+	assert.Empty(t, received, "nothing must be sent")
 }
 
 func TestSMTPMailer_SendTemplatedEmail(t *testing.T) {
@@ -108,7 +134,7 @@ func TestSMTPMailer_FailsWhenServerIsUnreachable(t *testing.T) {
 	addr := ln.Addr().String()
 	ln.Close()
 
-	err = mailer.NewSMTPMailer(addr).SendSimpleEmail("bob@example.com", "shop@example.com", "Hello", "body")
+	err = mailer.NewSMTPMailer(addr).SendEmail(mailer.Email{To: "bob@example.com", From: "shop@example.com", Title: "Hello", Body: "body"})
 
 	assert.Error(t, err)
 }
@@ -116,7 +142,7 @@ func TestSMTPMailer_FailsWhenServerIsUnreachable(t *testing.T) {
 func TestSMTPMailer_EncodesANonASCIISubject(t *testing.T) {
 	addr, received := smtpServer(t)
 
-	err := mailer.NewSMTPMailer(addr).SendSimpleEmail("bob@example.com", "shop@example.com", "Votre annonce est publiée", "body")
+	err := mailer.NewSMTPMailer(addr).SendEmail(mailer.Email{To: "bob@example.com", From: "shop@example.com", Title: "Votre annonce est publiée", Body: "body"})
 
 	require.NoError(t, err)
 	msg, err := mail.ReadMessage(strings.NewReader(receive(t, received)))
@@ -138,7 +164,7 @@ func TestSMTPMailer_RefusesALineBreakInAHeader(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			addr, received := smtpServer(t)
 
-			err := mailer.NewSMTPMailer(addr).SendSimpleEmail(c[0], c[1], c[2], "body")
+			err := mailer.NewSMTPMailer(addr).SendEmail(mailer.Email{To: c[0], From: c[1], Title: c[2], Body: "body"})
 
 			assert.Error(t, err)
 			assert.Empty(t, received, "nothing must be sent")
@@ -149,7 +175,7 @@ func TestSMTPMailer_RefusesALineBreakInAHeader(t *testing.T) {
 func TestSMTPMailer_RefusesAnInvalidAddress(t *testing.T) {
 	addr, received := smtpServer(t)
 
-	err := mailer.NewSMTPMailer(addr).SendSimpleEmail("not an address", "shop@example.com", "Hello", "body")
+	err := mailer.NewSMTPMailer(addr).SendEmail(mailer.Email{To: "not an address", From: "shop@example.com", Title: "Hello", Body: "body"})
 
 	assert.Error(t, err)
 	assert.Empty(t, received, "nothing must be sent")

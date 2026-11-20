@@ -1,14 +1,10 @@
 package testing
 
-import "sync"
+import (
+	"sync"
 
-// SentSimpleEmail represents a simple email that was sent
-type SentSimpleEmail struct {
-	To    string
-	From  string
-	Title string
-	Body  string
-}
+	"ddd-second-hand-marketplace/pkg/mailer"
+)
 
 // SentTemplatedEmail represents a templated email that was sent
 type SentTemplatedEmail struct {
@@ -20,7 +16,7 @@ type SentTemplatedEmail struct {
 
 // MailerSpy is a test spy that captures sent emails for verification
 type MailerSpy struct {
-	sentSimpleEmails    []SentSimpleEmail
+	sentEmails          []mailer.Email
 	sentTemplatedEmails []SentTemplatedEmail
 	mu                  sync.Mutex
 }
@@ -28,23 +24,17 @@ type MailerSpy struct {
 // NewMailerSpy creates a new MailerSpy instance
 func NewMailerSpy() *MailerSpy {
 	return &MailerSpy{
-		sentSimpleEmails:    make([]SentSimpleEmail, 0),
+		sentEmails:          make([]mailer.Email, 0),
 		sentTemplatedEmails: make([]SentTemplatedEmail, 0),
 	}
 }
 
-// SendSimpleEmail captures the simple email for testing
-func (m *MailerSpy) SendSimpleEmail(toEmail, fromEmail, title, body string) error {
+// SendEmail captures the email, ReplyTo included, for testing
+func (m *MailerSpy) SendEmail(email mailer.Email) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.sentSimpleEmails = append(m.sentSimpleEmails, SentSimpleEmail{
-		To:    toEmail,
-		From:  fromEmail,
-		Title: title,
-		Body:  body,
-	})
-
+	m.sentEmails = append(m.sentEmails, email)
 	return nil
 }
 
@@ -63,13 +53,13 @@ func (m *MailerSpy) SendTemplatedEmail(toEmail, fromEmail, templateId string, te
 	return nil
 }
 
-// GetSentSimpleEmails returns all captured simple emails
-func (m *MailerSpy) GetSentSimpleEmails() []SentSimpleEmail {
+// GetSentEmails returns all captured emails
+func (m *MailerSpy) GetSentEmails() []mailer.Email {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	emails := make([]SentSimpleEmail, len(m.sentSimpleEmails))
-	copy(emails, m.sentSimpleEmails)
+	emails := make([]mailer.Email, len(m.sentEmails))
+	copy(emails, m.sentEmails)
 	return emails
 }
 
@@ -88,6 +78,6 @@ func (m *MailerSpy) Reset() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.sentSimpleEmails = make([]SentSimpleEmail, 0)
+	m.sentEmails = make([]mailer.Email, 0)
 	m.sentTemplatedEmails = make([]SentTemplatedEmail, 0)
 }

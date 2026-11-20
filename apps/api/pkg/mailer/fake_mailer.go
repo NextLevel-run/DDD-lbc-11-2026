@@ -13,9 +13,13 @@ func NewFakeMailer() *FakeMailer {
 	return &FakeMailer{}
 }
 
-// SendSimpleEmail logs the email to the console
-func (m *FakeMailer) SendSimpleEmail(toEmail, fromEmail, title, body string) error {
-	fmt.Printf("Send simple email from %s to %s: %s\n", fromEmail, toEmail, title)
+// SendEmail logs the email to the console
+func (m *FakeMailer) SendEmail(email Email) error {
+	replyTo := ""
+	if email.ReplyTo != "" {
+		replyTo = " (reply-to " + email.ReplyTo + ")"
+	}
+	fmt.Printf("Send email from %s%s to %s: %s\n", email.From, replyTo, email.To, email.Title)
 	return nil
 }
 

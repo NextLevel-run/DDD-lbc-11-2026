@@ -4,12 +4,12 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Le port `Mailer` expose une seule façon d'envoyer un mail simple, qui prend une struct `Email{To, From, ReplyTo, Title, Body}`. `ReplyTo` est facultatif.
-- [ ] L'adapter SMTP écrit l'en-tête `Reply-To` quand `ReplyTo` est renseigné, et seulement dans ce cas. Un test le vérifie dans les deux cas.
-- [ ] Le fake mailer logge le `ReplyTo`, et le spy l'enregistre pour que les tests puissent l'affirmer.
-- [ ] L'envoi de la confirmation de dépôt passe par le nouveau port, sans `ReplyTo`. Son objet, son corps, son expéditeur et ses liens ne changent pas, et ses tests passent sans retouche de leurs attentes.
-- [ ] Il ne reste aucun appel à l'ancienne signature.
-- [ ] La ligne **Mailer** du glossaire technique est à jour si sa définition change.
-- [ ] `make check` est vert.
+- [x] Le port `Mailer` expose une seule façon d'envoyer un mail simple, qui prend une struct `Email{To, From, ReplyTo, Title, Body}`. `ReplyTo` est facultatif.
+- [x] L'adapter SMTP écrit l'en-tête `Reply-To` quand `ReplyTo` est renseigné, et seulement dans ce cas. Un test le vérifie dans les deux cas.
+- [x] Le fake mailer logge le `ReplyTo`, et le spy l'enregistre pour que les tests puissent l'affirmer.
+- [x] L'envoi de la confirmation de dépôt passe par le nouveau port, sans `ReplyTo`. Son objet, son corps, son expéditeur et ses liens ne changent pas, et ses tests passent sans retouche de leurs attentes.
+- [x] Il ne reste aucun appel à l'ancienne signature.
+- [x] La ligne **Mailer** du glossaire technique est à jour si sa définition change.
+- [x] `make check` est vert.
