@@ -9,7 +9,7 @@ Shared terms: [`domain.md`](../../documentation/glossary/domain.md), [`technical
 ## Map
 
 - `playwright.config.ts` — starts its own API (`:18080`, `DEMO_DATA=off`) and frontend (`:13000`), so it never touches the state of `make dev`. Ports live in `ports.ts`.
-- `tests/*.spec.ts` — one file per journey or concern; `tests/support.ts` holds the helpers (`ouvrir`, `deposer`, `unJeton`, Mailcatcher lookups).
+- `tests/*.spec.ts` — one file per journey or concern; `tests/support.ts` holds the helpers (`ouvrir`, `deposer`, `deposerEnLigne`, `unJeton`, Mailcatcher lookups). `parcours-vendeur` also runs the correction journey: challenge on the hidden moderation pages, the email link, the correction, a second validation.
 - Mailcatcher (`:1025` SMTP, `:1080` API) is shared with `make mail` and must be running.
 
 ## Commands
@@ -24,5 +24,5 @@ Only what needs the real stack: server rendering, the HTTP gateway against the A
 
 - **Load every page through `ouvrir(page, url)`**: it waits for React hydration. Acting earlier submits the server-rendered form natively or clicks a dead button, a past cause of flaky failures.
 - **Tests share one in-memory API**: each builds its own annonces around `unJeton()` and searches by that token. Never assert on global counts or demo data (they are off).
-- **Set data up through the API (`deposer`)**: the deposit form is exercised once, in `parcours-vendeur`.
-- **Find an email by its unique recipient** in Mailcatcher's `/messages`, never by position.
+- **Set data up through the API**: the deposit form is exercised once, in `parcours-vendeur`. A deposited annonce awaits moderation and is online nowhere: `deposer` leaves it so, `deposerEnLigne` has it validated through the moderation API, for a test that searches or opens it.
+- **Find an email by its unique recipient** in Mailcatcher's `/messages`, never by position; a recipient who gets several emails (confirmation, challenge) is told apart by a `sujet` fragment.

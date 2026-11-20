@@ -21,6 +21,10 @@ func setupSupprimerAnnonce(t *testing.T) (SupprimerAnnonceCommand, *inmemory.InM
 	require.NoError(t, bus.Subscribe(domain.AnnonceSupprimeeEventType, collector.EventHandler()))
 	id, err := BuildDeposerAnnonceCommand(repo, bus, func() time.Time { return maintenant })(validCommandArgs())
 	require.NoError(t, err)
+	annonce, err := repo.GetByID(id)
+	require.NoError(t, err)
+	require.NoError(t, annonce.Activer())
+	require.NoError(t, repo.Save(annonce))
 	supprimeeLe := maintenant.Add(48 * time.Hour)
 	return BuildSupprimerAnnonceCommand(repo, bus, func() time.Time { return supprimeeLe }), repo, collector, id
 }
@@ -93,4 +97,22 @@ func TestSupprimerAnnonce_RejectsAMalformedOrUnknownID(t *testing.T) {
 
 	assert.ErrorIs(t, supprimer(SupprimerAnnonceCommandArgs{ID: "pas-un-uuid", MotDePasse: "demo1234", Raison: "autre"}), domain.ErrIDAnnonceInvalide)
 	assert.ErrorIs(t, supprimer(SupprimerAnnonceCommandArgs{ID: "6f1c1c2e-8a43-4b7e-9d52-0a1b2c3d4e5f", MotDePasse: "demo1234", Raison: "autre"}), domain.ErrAnnonceIntrouvable)
+}
+
+func TestSupprimerAnnonce_AnswersIntrouvableForAnAnnonceNotActivee(t *testing.T) {
+	repo := inmemory.NewInMemoryAnnonceRepository()
+	bus := eventbus.NewSyncInMemoryEventBus()
+	collector := eventbustesting.NewEventCollector()
+	require.NoError(t, bus.Subscribe(domain.AnnonceSupprimeeEventType, collector.EventHandler()))
+	id, err := BuildDeposerAnnonceCommand(repo, bus, func() time.Time { return maintenant })(validCommandArgs())
+	require.NoError(t, err)
+	supprimer := BuildSupprimerAnnonceCommand(repo, bus, func() time.Time { return maintenant })
+
+	err = supprimer(SupprimerAnnonceCommandArgs{ID: id, MotDePasse: "demo1234", Raison: "autre"})
+
+	assert.ErrorIs(t, err, domain.ErrAnnonceIntrouvable)
+	assert.Empty(t, collector.GetEvents())
+	stored, err := repo.GetByID(id)
+	require.NoError(t, err)
+	assert.Equal(t, domain.EnAttenteModeration, stored.Statut())
 }

@@ -13,6 +13,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as RechercheRouteImport } from './routes/recherche'
 import { Route as AnnoncesIdRouteImport } from './routes/annonces/$id'
 import { Route as AnnoncesDeposerRouteImport } from './routes/annonces/deposer'
+import { Route as ModerationIndexRouteImport } from './routes/moderation/index'
+import { Route as ModerationIdRouteImport } from './routes/moderation/$id'
+import { Route as AnnoncesIdCorrigerRouteImport } from './routes/annonces/$id_.corriger'
 import { Route as AnnoncesIdSupprimerRouteImport } from './routes/annonces/$id_.supprimer'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +38,21 @@ const AnnoncesDeposerRoute = AnnoncesDeposerRouteImport.update({
   path: '/annonces/deposer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ModerationIndexRoute = ModerationIndexRouteImport.update({
+  id: '/moderation/',
+  path: '/moderation/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ModerationIdRoute = ModerationIdRouteImport.update({
+  id: '/moderation/$id',
+  path: '/moderation/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnnoncesIdCorrigerRoute = AnnoncesIdCorrigerRouteImport.update({
+  id: '/annonces/$id_/corriger',
+  path: '/annonces/$id/corriger',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnnoncesIdSupprimerRoute = AnnoncesIdSupprimerRouteImport.update({
   id: '/annonces/$id_/supprimer',
   path: '/annonces/$id/supprimer',
@@ -46,6 +64,9 @@ export interface FileRoutesByFullPath {
   '/recherche': typeof RechercheRoute
   '/annonces/$id': typeof AnnoncesIdRoute
   '/annonces/deposer': typeof AnnoncesDeposerRoute
+  '/moderation/$id': typeof ModerationIdRoute
+  '/moderation/': typeof ModerationIndexRoute
+  '/annonces/$id/corriger': typeof AnnoncesIdCorrigerRoute
   '/annonces/$id/supprimer': typeof AnnoncesIdSupprimerRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +74,9 @@ export interface FileRoutesByTo {
   '/recherche': typeof RechercheRoute
   '/annonces/$id': typeof AnnoncesIdRoute
   '/annonces/deposer': typeof AnnoncesDeposerRoute
+  '/moderation/$id': typeof ModerationIdRoute
+  '/moderation': typeof ModerationIndexRoute
+  '/annonces/$id/corriger': typeof AnnoncesIdCorrigerRoute
   '/annonces/$id/supprimer': typeof AnnoncesIdSupprimerRoute
 }
 export interface FileRoutesById {
@@ -61,6 +85,9 @@ export interface FileRoutesById {
   '/recherche': typeof RechercheRoute
   '/annonces/$id': typeof AnnoncesIdRoute
   '/annonces/deposer': typeof AnnoncesDeposerRoute
+  '/moderation/$id': typeof ModerationIdRoute
+  '/moderation/': typeof ModerationIndexRoute
+  '/annonces/$id_/corriger': typeof AnnoncesIdCorrigerRoute
   '/annonces/$id_/supprimer': typeof AnnoncesIdSupprimerRoute
 }
 export interface FileRouteTypes {
@@ -70,6 +97,9 @@ export interface FileRouteTypes {
     | '/recherche'
     | '/annonces/$id'
     | '/annonces/deposer'
+    | '/moderation/$id'
+    | '/moderation/'
+    | '/annonces/$id/corriger'
     | '/annonces/$id/supprimer'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -77,6 +107,9 @@ export interface FileRouteTypes {
     | '/recherche'
     | '/annonces/$id'
     | '/annonces/deposer'
+    | '/moderation/$id'
+    | '/moderation'
+    | '/annonces/$id/corriger'
     | '/annonces/$id/supprimer'
   id:
     | '__root__'
@@ -84,6 +117,9 @@ export interface FileRouteTypes {
     | '/recherche'
     | '/annonces/$id'
     | '/annonces/deposer'
+    | '/moderation/$id'
+    | '/moderation/'
+    | '/annonces/$id_/corriger'
     | '/annonces/$id_/supprimer'
   fileRoutesById: FileRoutesById
 }
@@ -92,6 +128,9 @@ export interface RootRouteChildren {
   RechercheRoute: typeof RechercheRoute
   AnnoncesIdRoute: typeof AnnoncesIdRoute
   AnnoncesDeposerRoute: typeof AnnoncesDeposerRoute
+  ModerationIdRoute: typeof ModerationIdRoute
+  ModerationIndexRoute: typeof ModerationIndexRoute
+  AnnoncesIdCorrigerRoute: typeof AnnoncesIdCorrigerRoute
   AnnoncesIdSupprimerRoute: typeof AnnoncesIdSupprimerRoute
 }
 
@@ -125,6 +164,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnnoncesDeposerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/moderation/': {
+      id: '/moderation/'
+      path: '/moderation'
+      fullPath: '/moderation/'
+      preLoaderRoute: typeof ModerationIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/moderation/$id': {
+      id: '/moderation/$id'
+      path: '/moderation/$id'
+      fullPath: '/moderation/$id'
+      preLoaderRoute: typeof ModerationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/annonces/$id_/corriger': {
+      id: '/annonces/$id_/corriger'
+      path: '/annonces/$id/corriger'
+      fullPath: '/annonces/$id/corriger'
+      preLoaderRoute: typeof AnnoncesIdCorrigerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/annonces/$id_/supprimer': {
       id: '/annonces/$id_/supprimer'
       path: '/annonces/$id/supprimer'
@@ -140,6 +200,9 @@ const rootRouteChildren: RootRouteChildren = {
   RechercheRoute: RechercheRoute,
   AnnoncesIdRoute: AnnoncesIdRoute,
   AnnoncesDeposerRoute: AnnoncesDeposerRoute,
+  ModerationIdRoute: ModerationIdRoute,
+  ModerationIndexRoute: ModerationIndexRoute,
+  AnnoncesIdCorrigerRoute: AnnoncesIdCorrigerRoute,
   AnnoncesIdSupprimerRoute: AnnoncesIdSupprimerRoute,
 }
 export const routeTree = rootRouteImport

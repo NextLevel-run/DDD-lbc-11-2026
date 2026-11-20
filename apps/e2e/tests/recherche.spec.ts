@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { deposer, ouvrir, unDepot, unJeton } from './support'
+import { deposerEnLigne, ouvrir, unDepot, unJeton } from './support'
 
 // The search page against the real API: the HTTP gateway's query string, the
 // API's normalisation and filters, the real table of régions. The rules
@@ -12,7 +12,7 @@ test('the filters typed in the page reach the API and stay in the URL', async ({
   const jeton = unJeton()
   const cherche = `Planche de surf ${jeton}`
   await Promise.all([
-    deposer(
+    deposerEnLigne(
       request,
       unDepot(jeton, {
         titre: cherche,
@@ -23,7 +23,7 @@ test('the filters typed in the page reach the API and stay in the URL', async ({
       }),
     ),
     // The homonym in Seine-Saint-Denis.
-    deposer(
+    deposerEnLigne(
       request,
       unDepot(jeton, {
         titre: `Planche à repasser ${jeton}`,
@@ -34,7 +34,7 @@ test('the filters typed in the page reach the API and stay in the URL', async ({
       }),
     ),
     // Out of the fourchette de prix.
-    deposer(
+    deposerEnLigne(
       request,
       unDepot(jeton, {
         titre: `Planche de surf pro ${jeton}`,
@@ -45,7 +45,7 @@ test('the filters typed in the page reach the API and stay in the URL', async ({
       }),
     ),
     // Another catégorie.
-    deposer(
+    deposerEnLigne(
       request,
       unDepot(jeton, {
         titre: `Planche de bois ${jeton}`,
@@ -94,7 +94,7 @@ test('the home search bar searches by catégorie and lieu', async ({
 }) => {
   const jeton = unJeton()
   await Promise.all([
-    deposer(
+    deposerEnLigne(
       request,
       unDepot(jeton, {
         titre: `Scooter ${jeton}`,
@@ -103,7 +103,7 @@ test('the home search bar searches by catégorie and lieu', async ({
         codePostal: '20000',
       }),
     ),
-    deposer(
+    deposerEnLigne(
       request,
       unDepot(jeton, {
         titre: `Scooter bastiais ${jeton}`,
@@ -150,7 +150,10 @@ test('the pagination serves the next page from the API', async ({
   const jeton = unJeton()
   for (let i = 1; i <= 21; i++) {
     // One at a time: the API dates the annonces, the first one is the oldest.
-    await deposer(request, unDepot(jeton, { titre: `Lot ${i} ${jeton}` }))
+    await deposerEnLigne(
+      request,
+      unDepot(jeton, { titre: `Lot ${i} ${jeton}` }),
+    )
   }
 
   await ouvrir(page, `/recherche?motCle=${jeton}`)

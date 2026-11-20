@@ -42,7 +42,7 @@ describe('Déposer une annonce page', () => {
     ).toBeInTheDocument()
   })
 
-  it('deposits the annonce then shows it with a toast', async () => {
+  it('deposits the annonce then says it is awaiting moderation', async () => {
     const user = userEvent.setup()
     await renderDepot()
 
@@ -50,12 +50,35 @@ describe('Déposer une annonce page', () => {
     await user.click(publier())
 
     expect(
-      await screen.findByRole('heading', { name: 'Vélo de course' }),
+      await screen.findByRole('heading', {
+        name: 'Votre annonce est en cours de modération',
+      }),
     ).toBeInTheDocument()
     expect(await screen.findByText('Annonce déposée')).toBeInTheDocument()
-    expect(screen.getByText(/12,50/)).toBeInTheDocument()
-    expect(screen.getByText('Loisirs')).toBeInTheDocument()
-    expect(screen.getByText('cycliste69')).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: "Retour à l'accueil" }),
+    ).toBeInTheDocument()
+  })
+
+  it('leaves the new annonce out of the consultation and the search', async () => {
+    const user = userEvent.setup()
+    const gateway = createInMemoryAnnonceGateway()
+    const ids: Array<string> = []
+    await renderDepot({
+      ...gateway,
+      deposerAnnonce: async (args) => {
+        const id = await gateway.deposerAnnonce(args)
+        ids.push(id)
+        return id
+      },
+    })
+
+    await remplirLeFormulaire(user)
+    await user.click(publier())
+    await screen.findByText('Votre annonce est en cours de modération')
+
+    expect(await gateway.consulterAnnonce(ids[0])).toBeNull()
+    expect((await gateway.rechercherAnnonces({})).total).toBe(0)
   })
 
   it('sends the prix in centimes and accepts a don', async () => {
@@ -73,7 +96,9 @@ describe('Déposer une annonce page', () => {
     await remplirLeFormulaire(user, '0')
     await user.click(publier())
 
-    expect(await screen.findByText('Don')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Votre annonce est en cours de modération'),
+    ).toBeInTheDocument()
     expect(deposees).toEqual([0])
   })
 

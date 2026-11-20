@@ -90,6 +90,36 @@ type SupprimerAnnonceRequest struct {
 	Raison     string `json:"raison"`
 }
 
+// EditerAnnonceRequest is the body of POST /annonces/{id}/edition.
+type EditerAnnonceRequest struct {
+	MotDePasse string `json:"motDePasse"`
+}
+
+// AnnonceAEditerResponse prefills the correction form: the editable fields and
+// the motif of the challenge. Prix is in centimes.
+type AnnonceAEditerResponse struct {
+	Titre       string `json:"titre"`
+	Description string `json:"description"`
+	Prix        int64  `json:"prix"`
+	Categorie   string `json:"categorie"`
+	Ville       string `json:"ville"`
+	CodePostal  string `json:"codePostal"`
+	Motif       string `json:"motif"`
+}
+
+// CorrigerAnnonceRequest is the body of POST /annonces/{id}/correction: the
+// mot de passe and the fields of a dépôt a vendeur may change. Prix is in
+// centimes and required.
+type CorrigerAnnonceRequest struct {
+	MotDePasse  string `json:"motDePasse"`
+	Titre       string `json:"titre"`
+	Description string `json:"description"`
+	Prix        *int64 `json:"prix"`
+	Categorie   string `json:"categorie"`
+	Ville       string `json:"ville"`
+	CodePostal  string `json:"codePostal"`
+}
+
 type DeposerAnnonceResponse struct {
 	ID string `json:"id"`
 }

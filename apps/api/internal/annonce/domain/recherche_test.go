@@ -18,6 +18,7 @@ func annonceAvec(t *testing.T, titre, description string) *Annonce {
 		Pseudo: "cycliste", MotDePasse: "demo1234", Email: "cycliste@example.com", DeposeeLe: time.Now(),
 	})
 	require.NoError(t, err)
+	require.NoError(t, annonce.Activer())
 	return annonce
 }
 
@@ -54,15 +55,17 @@ func TestCriteresRecherche_MotCle(t *testing.T) {
 
 func TestCriteresRecherche_KeepsOnlyActiveeAnnonces(t *testing.T) {
 	velo := annonceAvec(t, "Vélo Électrique", "Autonomie 60 km, révisé.")
-	cache, err := RestoreAnnonce(uuid.NewString(), Statut(""), NewAnnonceArgs{
-		Titre: velo.Titre(), Description: velo.Description(), Prix: 50000,
-		Categorie: "loisirs", Ville: "Lyon", CodePostal: "69003",
-		Pseudo: "cycliste", MotDePasse: "demo1234", Email: "cycliste@example.com", DeposeeLe: time.Now(),
-	})
-	require.NoError(t, err)
+	for _, statut := range []Statut{EnAttenteModeration, Challengee, Refusee, Supprimee} {
+		cache, err := RestoreAnnonce(uuid.NewString(), statut, NewAnnonceArgs{
+			Titre: velo.Titre(), Description: velo.Description(), Prix: 50000,
+			Categorie: "loisirs", Ville: "Lyon", CodePostal: "69003",
+			Pseudo: "cycliste", MotDePasse: "demo1234", Email: "cycliste@example.com", DeposeeLe: time.Now(),
+		})
+		require.NoError(t, err)
 
-	assert.False(t, criteres(t, "").Retient(cache))
-	assert.False(t, criteres(t, "velo").Retient(cache))
+		assert.False(t, criteres(t, "").Retient(cache), statut)
+		assert.False(t, criteres(t, "velo").Retient(cache), statut)
+	}
 }
 
 func TestNewPage(t *testing.T) {
@@ -94,6 +97,7 @@ func annonceAPrix(t *testing.T, categorie string, prix int64) *Annonce {
 		Pseudo: "cycliste", MotDePasse: "demo1234", Email: "cycliste@example.com", DeposeeLe: time.Now(),
 	})
 	require.NoError(t, err)
+	require.NoError(t, annonce.Activer())
 	return annonce
 }
 
@@ -182,6 +186,7 @@ func annonceA(t *testing.T, ville, codePostal string) *Annonce {
 		Pseudo: "cycliste", MotDePasse: "demo1234", Email: "cycliste@example.com", DeposeeLe: time.Now(),
 	})
 	require.NoError(t, err)
+	require.NoError(t, annonce.Activer())
 	return annonce
 }
 

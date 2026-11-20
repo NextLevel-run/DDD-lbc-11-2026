@@ -29,6 +29,13 @@ repository, not its textbook definition nor what the code shows. Format: `- **Te
   - **Consumer** — a driving adapter that runs a use case when an event type is published.
 - **Composition root** — where adapters are built and injected: `newServer` in `cmd/api/server.go` (API), `gateways.ts` (frontend).
 
+## API: event sourcing
+
+- **Event sourcing** — an aggregate's state is whatever replaying its stream gives; only events are stored.
+  - **Stream** — the ordered events of one aggregate; its length is the version.
+  - **Event store** — the repository of a stream: loads it, appends events under a version check.
+  - **Optimistic version check** — an append fails with `ErrConflitVersion` if the stream grew since it was loaded.
+
 ## API: shared infrastructure
 
 - **Event bus** — delivers domain events to their subscribed consumers, synchronously or asynchronously.

@@ -40,6 +40,7 @@ func TestConsulterAnnonce_ReturnsTheDetailOfAnActiveeAnnonce(t *testing.T) {
 	repo, consulter := setupConsulterAnnonce(t)
 	annonce, err := domain.NewAnnonce(annonceArgs())
 	require.NoError(t, err)
+	require.NoError(t, annonce.Activer())
 	require.NoError(t, repo.Save(annonce))
 
 	view, err := consulter(annonce.ID())
@@ -82,13 +83,15 @@ func TestConsulterAnnonce_ReportsAnUnknownAnnonce(t *testing.T) {
 }
 
 func TestConsulterAnnonce_HidesAnAnnonceThatIsNotActivee(t *testing.T) {
-	repo, consulter := setupConsulterAnnonce(t)
-	annonce, err := domain.RestoreAnnonce(uuid.NewString(), domain.Statut(""), annonceArgs())
-	require.NoError(t, err)
-	require.NoError(t, repo.Save(annonce))
+	for _, statut := range []domain.Statut{domain.EnAttenteModeration, domain.Challengee, domain.Refusee, domain.Supprimee} {
+		repo, consulter := setupConsulterAnnonce(t)
+		annonce, err := domain.RestoreAnnonce(uuid.NewString(), statut, annonceArgs())
+		require.NoError(t, err)
+		require.NoError(t, repo.Save(annonce))
 
-	view, err := consulter(annonce.ID())
+		view, err := consulter(annonce.ID())
 
-	require.ErrorIs(t, err, domain.ErrAnnonceIntrouvable)
-	assert.Nil(t, view)
+		require.ErrorIs(t, err, domain.ErrAnnonceIntrouvable, statut)
+		assert.Nil(t, view)
+	}
 }

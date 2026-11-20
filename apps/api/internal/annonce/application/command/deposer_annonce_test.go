@@ -40,7 +40,7 @@ func validCommandArgs() DeposerAnnonceCommandArgs {
 	}
 }
 
-func TestDeposerAnnonce_PersistsAnActiveeAnnonceDatedNow(t *testing.T) {
+func TestDeposerAnnonce_PersistsAnAnnonceEnAttenteModerationDatedNow(t *testing.T) {
 	deposerAnnonce, repo, _ := setupDeposerAnnonce(t)
 
 	id, err := deposerAnnonce(validCommandArgs())
@@ -48,7 +48,8 @@ func TestDeposerAnnonce_PersistsAnActiveeAnnonceDatedNow(t *testing.T) {
 	require.NoError(t, err)
 	stored, err := repo.GetByID(id)
 	require.NoError(t, err)
-	assert.True(t, stored.EstActivee())
+	assert.Equal(t, domain.EnAttenteModeration, stored.Statut())
+	assert.False(t, stored.EstActivee())
 	assert.Equal(t, maintenant, stored.DeposeeLe())
 	assert.Equal(t, "Vélo de course", stored.Titre())
 	assert.Equal(t, int64(45000), stored.Prix().Centimes())

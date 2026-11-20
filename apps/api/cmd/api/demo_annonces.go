@@ -95,6 +95,10 @@ func loadDemoAnnonces(repo domain.AnnonceRepository) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
+		// Demo annonces skip the moderation: they are online from the start.
+		if err := annonce.Activer(); err != nil {
+			return nil, err
+		}
 		if err := repo.Save(annonce); err != nil {
 			return nil, err
 		}

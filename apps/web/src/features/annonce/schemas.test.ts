@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  centimesEnEuros,
+  corrigerAnnonceSchema,
   deposerAnnonceSchema,
   eurosEnCentimes,
   criteresDeRecherche,
@@ -24,6 +26,18 @@ const messagesFor = (values: Partial<DeposerAnnonceValues>) => {
   const result = deposerAnnonceSchema.safeParse({ ...valid, ...values })
   return result.success ? [] : result.error.issues.map((issue) => issue.message)
 }
+
+describe('centimesEnEuros', () => {
+  it.each([
+    [0, '0'],
+    [45000, '450'],
+    [45050, '450,50'],
+    [5, '0,05'],
+  ])('writes %d centimes as %s', (centimes, euros) => {
+    expect(centimesEnEuros(centimes)).toBe(euros)
+    expect(eurosEnCentimes(euros)).toBe(centimes)
+  })
+})
 
 describe('eurosEnCentimes', () => {
   it.each([
@@ -253,5 +267,40 @@ describe('criteresDeRecherche', () => {
   it('drops a region or a departement the API does not know', () => {
     expect(criteresDeRecherche({ region: '99' }, regions)).toEqual({})
     expect(criteresDeRecherche({ departement: '975' }, regions)).toEqual({})
+  })
+})
+
+describe('corrigerAnnonceSchema', () => {
+  const correction = {
+    titre: 'Vélo de course révisé',
+    description: 'Cadre carbone, photos ajoutées.',
+    prix: '420,50',
+    categorie: 'loisirs',
+    ville: 'Lyon',
+    codePostal: '69003',
+  }
+
+  it('turns the fields into the centimes the gateway takes', () => {
+    expect(corrigerAnnonceSchema.parse(correction)).toEqual({
+      ...correction,
+      prix: 42050,
+    })
+  })
+
+  it('applies the rules of the dépôt to the fields it keeps', () => {
+    const result = corrigerAnnonceSchema.safeParse({
+      ...correction,
+      titre: 'ab',
+      prix: 'beaucoup',
+      codePostal: '123',
+    })
+
+    expect(
+      result.success ? [] : result.error.issues.map((i) => i.message),
+    ).toEqual([
+      'Le titre doit comporter de 3 à 100 caractères',
+      'Le prix doit être un montant en euros, par exemple 12,50',
+      'Le code postal doit comporter 5 chiffres',
+    ])
   })
 })

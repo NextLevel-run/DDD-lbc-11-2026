@@ -6,6 +6,7 @@ import "errors"
 // the HTTP adapter may show them as they are.
 var (
 	ErrAnnonceIntrouvable        = errors.New("annonce introuvable")
+	ErrTransitionStatutInvalide  = errors.New("cette annonce ne peut pas changer de statut")
 	ErrIDAnnonceInvalide         = errors.New("identifiant d'annonce invalide")
 	ErrTitreInvalide             = errors.New("le titre doit comporter de 3 à 100 caractères")
 	ErrDescriptionInvalide       = errors.New("la description doit comporter de 10 à 4 000 caractères")

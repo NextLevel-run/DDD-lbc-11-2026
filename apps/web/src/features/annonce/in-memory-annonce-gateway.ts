@@ -1,12 +1,11 @@
 import { ApiError } from '#/lib/http'
-import { libelleDeCategorie } from './categories'
 import { raisonsDeSuppression } from './raisons-suppression'
 import type {
   Annonce,
+  AnnonceAEditer,
   AnnonceGateway,
   ChampDepot,
   CriteresRecherche,
-  DeposerAnnonceArgs,
   RegionAvecDepartements,
   ResultatRecherche,
 } from './annonce-gateway'
@@ -53,6 +52,10 @@ export function createInMemoryAnnonceGateway(
     regions?: Array<RegionAvecDepartements>
     // Makes every dépôt fail as the API would refuse it.
     depotRefuse?: { erreur: string; champ?: ChampDepot }
+    // Annonces moderation has challenged, waiting for their correction.
+    annoncesChallengees?: Array<AnnonceAEditer & { id: string }>
+    // Makes every correction fail as the API would refuse it.
+    correctionRefusee?: { erreur: string; champ?: string }
     // The mot de passe of the annonces given above (default « demo1234 »).
     motDePasse?: string
   } = {},
@@ -60,10 +63,35 @@ export function createInMemoryAnnonceGateway(
   const annonces = new Map(
     (options.annonces ?? []).map((annonce) => [annonce.id, annonce]),
   )
+  const challengees = new Map(
+    (options.annoncesChallengees ?? []).map(({ id, ...edition }) => [
+      id,
+      edition,
+    ]),
+  )
   // The mot de passe of each annonce, kept apart: it never reaches a view.
   const motsDePasse = new Map(
-    [...annonces.keys()].map((id) => [id, options.motDePasse ?? 'demo1234']),
+    [...annonces.keys(), ...challengees.keys()].map((id) => [
+      id,
+      options.motDePasse ?? 'demo1234',
+    ]),
   )
+  // Mirrors the API: only a challengee annonce can be corrected, and an
+  // unknown or other one is a 404 whatever the mot de passe.
+  const autoriserCorrection = (id: string, motDePasse: string) => {
+    const edition = challengees.get(id)
+    if (!edition) {
+      throw new ApiError('Annonce introuvable', 404)
+    }
+    if (motsDePasse.get(id) !== motDePasse) {
+      throw new ApiError(
+        "Le mot de passe de l'annonce est incorrect",
+        400,
+        'motDePasse',
+      )
+    }
+    return edition
+  }
   return {
     consulterAnnonce: async (id) => annonces.get(id) ?? null,
     rechercherAnnonces: async (criteres) =>
@@ -82,10 +110,11 @@ export function createInMemoryAnnonceGateway(
           'motDePasse',
         )
       }
-      const annonce = toAnnonce(crypto.randomUUID(), args)
-      annonces.set(annonce.id, annonce)
-      motsDePasse.set(annonce.id, args.motDePasse)
-      return annonce.id
+      // Mirrors the API: a new annonce awaits moderation, so it is neither
+      // consultable, searchable nor deletable.
+      const id = crypto.randomUUID()
+      motsDePasse.set(id, args.motDePasse)
+      return id
     },
     // Mirrors the API: the raison is checked first, then the annonce, then
     // the mot de passe; a withdrawn annonce is gone, as a 404 would say.
@@ -110,30 +139,18 @@ export function createInMemoryAnnonceGateway(
       annonces.delete(id)
       motsDePasse.delete(id)
     },
-  }
-}
-
-// The in-memory adapter knows no département table: it keeps the code postal
-// prefix as the département code and leaves the names empty.
-function toAnnonce(id: string, args: DeposerAnnonceArgs): Annonce {
-  return {
-    id,
-    titre: args.titre,
-    description: args.description,
-    prix: args.prix,
-    categorie: {
-      code: args.categorie,
-      libelle: libelleDeCategorie(args.categorie) ?? args.categorie,
+    editerAnnonce: async ({ id, motDePasse }) =>
+      autoriserCorrection(id, motDePasse),
+    // The corrected annonce leaves for moderation: it is no longer challengee
+    // and not yet online.
+    corrigerAnnonce: async ({ id, motDePasse }) => {
+      autoriserCorrection(id, motDePasse)
+      if (options.correctionRefusee) {
+        const { erreur, champ } = options.correctionRefusee
+        throw new ApiError(erreur, 400, champ)
+      }
+      challengees.delete(id)
     },
-    localisation: {
-      ville: args.ville,
-      codePostal: args.codePostal,
-      departement: { code: args.codePostal.slice(0, 2), nom: '' },
-      region: { code: '', nom: '' },
-    },
-    vendeur: { pseudo: args.pseudo },
-    images: [],
-    deposeeLe: new Date().toISOString(),
   }
 }
 

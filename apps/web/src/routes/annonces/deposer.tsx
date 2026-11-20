@@ -1,5 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useState } from 'react'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { Button } from '@spark-ui/components/button'
 import { useToastManager } from '@spark-ui/components/toast'
 import { categories } from '#/features/annonce/categories'
 import { deposerAnnonceMutationOptions } from '#/features/annonce/queries'
@@ -40,7 +42,7 @@ const erreurDeChamp = (error: unknown) =>
 
 function DeposerAnnoncePage() {
   const { gateways, queryClient } = Route.useRouteContext()
-  const navigate = useNavigate()
+  const [deposee, setDeposee] = useState(false)
   const toasts = useToastManager()
   const depot = useMutation(
     deposerAnnonceMutationOptions(gateways.annonce, queryClient),
@@ -62,12 +64,12 @@ function DeposerAnnoncePage() {
     },
     onSubmit: async ({ value, formApi }) => {
       try {
-        const id = await depot.mutateAsync(deposerAnnonceSchema.parse(value))
+        await depot.mutateAsync(deposerAnnonceSchema.parse(value))
         toasts.add({
           title: 'Annonce déposée',
           data: { intent: 'success', isClosable: true },
         })
-        await navigate({ to: '/annonces/$id', params: { id } })
+        setDeposee(true)
       } catch (error) {
         const erreur = erreurDeChamp(error)
         if (erreur) {
@@ -82,6 +84,10 @@ function DeposerAnnoncePage() {
 
   const erreurGenerale =
     depot.error && !erreurDeChamp(depot.error) ? depot.error.message : undefined
+
+  if (deposee) {
+    return <EnCoursDeModeration />
+  }
 
   return (
     <main className="page-wrap px-lg pt-2xl pb-2xl">
@@ -218,6 +224,26 @@ function DeposerAnnoncePage() {
             <form.SubscribeButton label="Publier l'annonce" />
           </form.AppForm>
         </form>
+      </section>
+    </main>
+  )
+}
+
+// A new annonce is not online yet: it waits for the moderation.
+function EnCoursDeModeration() {
+  return (
+    <main className="page-wrap px-lg pt-3xl pb-2xl">
+      <section className="flex flex-col items-start gap-lg rounded-xl border-sm border-outline bg-surface px-xl py-3xl text-on-surface">
+        <h1 className="text-display-2">
+          Votre annonce est en cours de modération
+        </h1>
+        <p className="text-body-1 text-on-surface/dim-1">
+          Elle sera en ligne dès qu'elle aura été validée. Un email de
+          confirmation vous a été envoyé.
+        </p>
+        <Button asChild>
+          <Link to="/">Retour à l'accueil</Link>
+        </Button>
       </section>
     </main>
   )

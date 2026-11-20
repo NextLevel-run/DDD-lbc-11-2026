@@ -42,11 +42,14 @@ func TestEnvoyerConfirmationDepot(t *testing.T) {
 	if m.To != "marie@example.com" || m.From != "noreply@example.com" {
 		t.Errorf("to/from = %s/%s", m.To, m.From)
 	}
-	if m.Title != "Votre annonce « Vélo de ville » est en ligne" {
+	if m.Title != "Votre annonce « Vélo de ville » est en cours de modération" {
 		t.Errorf("title = %q", m.Title)
 	}
+	if strings.Contains(m.Body, "est en ligne") {
+		t.Errorf("the email promises the annonce is online:\n%s", m.Body)
+	}
 	for _, want := range []string{
-		"marie", "Vélo de ville",
+		"marie", "Vélo de ville", "en cours de modération",
 		"http://front.test/annonces/" + annonce.ID(),
 		"http://front.test/annonces/" + annonce.ID() + "/supprimer",
 		"mot de passe",

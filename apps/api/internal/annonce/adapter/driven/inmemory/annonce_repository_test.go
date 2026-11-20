@@ -20,6 +20,7 @@ func newAnnonce(t *testing.T) *domain.Annonce {
 		Pseudo: "nantais", MotDePasse: "demo1234", Email: "nantais@example.com", DeposeeLe: time.Now(),
 	})
 	require.NoError(t, err)
+	require.NoError(t, annonce.Activer())
 	return annonce
 }
 
@@ -90,7 +91,9 @@ func TestInMemoryAnnonceRepository_RechercherSortsMostRecentFirst(t *testing.T) 
 func TestInMemoryAnnonceRepository_RechercherExcludesAnnoncesNotActivee(t *testing.T) {
 	repo := NewInMemoryAnnonceRepository()
 	saveAnnonce(t, repo, "Vélo visible", jour, domain.Activee)
-	saveAnnonce(t, repo, "Vélo caché", jour, domain.Statut(""))
+	saveAnnonce(t, repo, "Vélo en attente", jour, domain.EnAttenteModeration)
+	saveAnnonce(t, repo, "Vélo challengé", jour, domain.Challengee)
+	saveAnnonce(t, repo, "Vélo refusé", jour, domain.Refusee)
 
 	resultat := rechercher(t, repo, "velo", 1)
 
@@ -138,6 +141,7 @@ func saveAnnonceA(t *testing.T, repo *InMemoryAnnonceRepository, titre, categori
 		Pseudo: "lillois", MotDePasse: "demo1234", Email: "lillois@example.com", DeposeeLe: deposeeLe,
 	})
 	require.NoError(t, err)
+	require.NoError(t, annonce.Activer())
 	require.NoError(t, repo.Save(annonce))
 }
 
@@ -197,6 +201,7 @@ func saveAnnonceAVille(t *testing.T, repo *InMemoryAnnonceRepository, titre, vil
 		Pseudo: "voisin", MotDePasse: "demo1234", Email: "voisin@example.com", DeposeeLe: deposeeLe,
 	})
 	require.NoError(t, err)
+	require.NoError(t, annonce.Activer())
 	require.NoError(t, repo.Save(annonce))
 }
 

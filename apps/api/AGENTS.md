@@ -9,7 +9,7 @@ Shared terms: [`domain.md`](../../documentation/glossary/domain.md), [`technical
 ## Map
 
 - `cmd/api/main.go` — reads the environment (`PORT`, default 8080) and starts the server.
-- `cmd/api/server.go` — the composition root, `newServer(serverConfig{Mailer, DemoData, FrontendURL})`: builds the adapters, the use cases, registers routes and consumers; returns the handler and the demo IDs. `server_test.go` tests it over `httptest` with the mailer spy.
+- `cmd/api/server.go` — the composition root, `newServer(serverConfig{Mailer, DemoData, FrontendURL})`: builds the adapters, the use cases, registers routes and consumers; returns the handler and the demo IDs. `server_test.go` tests it over `httptest` with the mailer spy. The two contexts, `annonce` and `moderation` (event sourced), share one async event bus.
 - `internal/<bounded-context>/` — `domain/`, `application/{command,query}/`, `adapter/{driven,driving}/`, and its own `AGENTS.md`.
 - `pkg/eventbus/`, `pkg/mailer/` — shared infrastructure, each with its test helper under `testing/`.
 - Demo data: `cmd/api/demo_annonces.go` seeds a dozen annonces at startup and logs a link to one; `DEMO_DATA=off` skips them. Only `server_test.go` loads them (the loader, and the demo annonces the QA guides rely on); other tests build their own data.

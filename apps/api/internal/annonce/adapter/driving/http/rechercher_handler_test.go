@@ -22,6 +22,7 @@ func saveVelo(t *testing.T, repo *inmemory.InMemoryAnnonceRepository, titre stri
 		Pseudo: "stephanois", MotDePasse: "demo1234", Email: "stephanois@example.com", DeposeeLe: deposeeLe,
 	})
 	require.NoError(t, err)
+	require.NoError(t, annonce.Activer())
 	require.NoError(t, repo.Save(annonce))
 	return annonce
 }
@@ -168,6 +169,7 @@ func saveAnnonceA(t *testing.T, repo *inmemory.InMemoryAnnonceRepository, titre,
 		Pseudo: "voisin", MotDePasse: "demo1234", Email: "voisin@example.com", DeposeeLe: maintenant,
 	})
 	require.NoError(t, err)
+	require.NoError(t, annonce.Activer())
 	require.NoError(t, repo.Save(annonce))
 }
 

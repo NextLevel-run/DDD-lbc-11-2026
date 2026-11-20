@@ -19,6 +19,8 @@ type Handler struct {
 	listerRegions      query.ListerRegionsQuery
 	deposerAnnonce     command.DeposerAnnonceCommand
 	supprimerAnnonce   command.SupprimerAnnonceCommand
+	annonceAEditer     query.ConsulterAnnonceAEditerQuery
+	corrigerAnnonce    command.CorrigerAnnonceCommand
 }
 
 func NewHandler(
@@ -27,6 +29,8 @@ func NewHandler(
 	listerRegions query.ListerRegionsQuery,
 	deposerAnnonce command.DeposerAnnonceCommand,
 	supprimerAnnonce command.SupprimerAnnonceCommand,
+	annonceAEditer query.ConsulterAnnonceAEditerQuery,
+	corrigerAnnonce command.CorrigerAnnonceCommand,
 ) *Handler {
 	return &Handler{
 		consulterAnnonce:   consulterAnnonce,
@@ -34,6 +38,8 @@ func NewHandler(
 		listerRegions:      listerRegions,
 		deposerAnnonce:     deposerAnnonce,
 		supprimerAnnonce:   supprimerAnnonce,
+		annonceAEditer:     annonceAEditer,
+		corrigerAnnonce:    corrigerAnnonce,
 	}
 }
 
@@ -43,6 +49,8 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /annonces/{id}", h.ConsulterAnnonce)
 	mux.HandleFunc("POST /annonces", h.DeposerAnnonce)
 	mux.HandleFunc("POST /annonces/{id}/suppression", h.SupprimerAnnonce)
+	mux.HandleFunc("POST /annonces/{id}/edition", h.EditerAnnonce)
+	mux.HandleFunc("POST /annonces/{id}/correction", h.CorrigerAnnonce)
 	mux.HandleFunc("GET /regions", h.ListerRegions)
 }
 
@@ -111,6 +119,56 @@ func (h *Handler) SupprimerAnnonce(w http.ResponseWriter, r *http.Request) {
 		ID:         r.PathValue("id"),
 		MotDePasse: req.MotDePasse,
 		Raison:     req.Raison,
+	})
+	if err != nil {
+		respondDomainError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// EditerAnnonce handles POST /annonces/{id}/edition: the editable fields and
+// the motif of a challengee annonce, for the vendeur who knows its mot de
+// passe. 400 naming motDePasse, 404 when the annonce is unknown or not
+// challengee.
+func (h *Handler) EditerAnnonce(w http.ResponseWriter, r *http.Request) {
+	var req EditerAnnonceRequest
+	r.Body = http.MaxBytesReader(w, r.Body, maxDepotBytes)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respond(w, http.StatusBadRequest, ErreurResponse{Erreur: "Requête invalide"})
+		return
+	}
+	view, err := h.annonceAEditer(r.PathValue("id"), req.MotDePasse)
+	if err != nil {
+		respondDomainError(w, err)
+		return
+	}
+	respond(w, http.StatusOK, AnnonceAEditerResponse(*view))
+}
+
+// CorrigerAnnonce handles POST /annonces/{id}/correction: 204 once the
+// annonce is back in moderation, 400 naming the field at fault, 404 when the
+// annonce is unknown or not challengee.
+func (h *Handler) CorrigerAnnonce(w http.ResponseWriter, r *http.Request) {
+	var req CorrigerAnnonceRequest
+	r.Body = http.MaxBytesReader(w, r.Body, maxDepotBytes)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respond(w, http.StatusBadRequest, ErreurResponse{Erreur: "Requête invalide"})
+		return
+	}
+	if req.Prix == nil {
+		respond(w, http.StatusBadRequest, ErreurResponse{Erreur: "Le prix est obligatoire", Champ: "prix"})
+		return
+	}
+	err := h.corrigerAnnonce(command.CorrigerAnnonceCommandArgs{
+		ID:          r.PathValue("id"),
+		MotDePasse:  req.MotDePasse,
+		Titre:       req.Titre,
+		Description: req.Description,
+		Prix:        *req.Prix,
+		Categorie:   req.Categorie,
+		Ville:       req.Ville,
+		CodePostal:  req.CodePostal,
 	})
 	if err != nil {
 		respondDomainError(w, err)

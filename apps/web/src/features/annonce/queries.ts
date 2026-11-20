@@ -2,6 +2,7 @@ import { mutationOptions, queryOptions } from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
 import type {
   AnnonceGateway,
+  CorrigerAnnonceArgs,
   CriteresRecherche,
   DeposerAnnonceArgs,
   SupprimerAnnonceArgs,
@@ -47,5 +48,23 @@ export const supprimerAnnonceMutationOptions = (
 ) =>
   mutationOptions({
     mutationFn: (args: SupprimerAnnonceArgs) => gateway.supprimerAnnonce(args),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['annonces'] }),
+  })
+
+// Opening the correction is a write of its own kind: the mot de passe is sent
+// and the answer is what prefills the form, kept out of the query cache.
+export const editerAnnonceMutationOptions = (gateway: AnnonceGateway) =>
+  mutationOptions({
+    mutationFn: (args: { id: string; motDePasse: string }) =>
+      gateway.editerAnnonce(args),
+  })
+
+// A corrected annonce leaves the public reads: every one of them is stale.
+export const corrigerAnnonceMutationOptions = (
+  gateway: AnnonceGateway,
+  queryClient: QueryClient,
+) =>
+  mutationOptions({
+    mutationFn: (args: CorrigerAnnonceArgs) => gateway.corrigerAnnonce(args),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['annonces'] }),
   })

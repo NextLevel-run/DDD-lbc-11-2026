@@ -1,6 +1,7 @@
 import { ApiError, request } from '#/lib/http'
 import type {
   Annonce,
+  AnnonceAEditer,
   AnnonceGateway,
   RegionAvecDepartements,
   ResultatRecherche,
@@ -73,6 +74,17 @@ export function createHttpAnnonceGateway(): AnnonceGateway {
       await request<void>(`/annonces/${encodeURIComponent(id)}/suppression`, {
         method: 'POST',
         body: JSON.stringify({ motDePasse, raison }),
+      })
+    },
+    editerAnnonce: ({ id, motDePasse }) =>
+      request<AnnonceAEditer>(`/annonces/${encodeURIComponent(id)}/edition`, {
+        method: 'POST',
+        body: JSON.stringify({ motDePasse }),
+      }),
+    corrigerAnnonce: async ({ id, ...correction }) => {
+      await request<void>(`/annonces/${encodeURIComponent(id)}/correction`, {
+        method: 'POST',
+        body: JSON.stringify(correction),
       })
     },
   }

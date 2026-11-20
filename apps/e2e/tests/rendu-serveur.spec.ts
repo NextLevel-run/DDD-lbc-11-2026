@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { deposer, unDepot, unJeton } from './support'
+import { deposerEnLigne, unDepot, unJeton } from './support'
 
 // Server-side rendering calls the API at API_URL, not through the Vite proxy:
 // with JavaScript off, only that path can fill the page. Unit tests render in
@@ -9,7 +9,7 @@ test.use({ javaScriptEnabled: false })
 test('an annonce is rendered on the server', async ({ page, request }) => {
   const jeton = unJeton()
   const depot = unDepot(jeton, { prix: 0 })
-  const id = await deposer(request, depot)
+  const id = await deposerEnLigne(request, depot)
 
   await page.goto(`/annonces/${id}`)
 
@@ -32,7 +32,7 @@ test('an unknown annonce is rendered as introuvable', async ({ page }) => {
 test('search results are rendered on the server', async ({ page, request }) => {
   const jeton = unJeton()
   const depot = unDepot(jeton)
-  await deposer(request, depot)
+  await deposerEnLigne(request, depot)
 
   await page.goto(`/recherche?motCle=${jeton.toUpperCase()}`)
 

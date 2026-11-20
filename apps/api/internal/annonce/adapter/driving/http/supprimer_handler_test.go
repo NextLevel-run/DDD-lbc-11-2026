@@ -6,20 +6,26 @@ import (
 	"strings"
 	"testing"
 
+	"ddd-second-hand-marketplace/internal/annonce/adapter/driven/inmemory"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func deposerUneAnnonce(t *testing.T, mux *http.ServeMux) string {
+// deposerUneAnnonce deposits an annonce and activates it, as moderation will.
+func deposerUneAnnonce(t *testing.T, repo *inmemory.InMemoryAnnonceRepository, mux *http.ServeMux) string {
 	t.Helper()
 	var body DeposerAnnonceResponse
 	require.NoError(t, json.NewDecoder(post(mux, "/annonces", depotValide).Body).Decode(&body))
+	annonce, err := repo.GetByID(body.ID)
+	require.NoError(t, err)
+	require.NoError(t, annonce.Activer())
 	return body.ID
 }
 
 func TestSupprimerAnnonce_AnswersNoContentAndTakesTheAnnonceOffline(t *testing.T) {
-	_, mux := setupHandler(t)
-	id := deposerUneAnnonce(t, mux)
+	repo, mux := setupHandler(t)
+	id := deposerUneAnnonce(t, repo, mux)
 
 	rec := post(mux, "/annonces/"+id+"/suppression", `{"motDePasse": "demo1234", "raison": "vendue-sur-le-site"}`)
 
@@ -40,8 +46,8 @@ func TestSupprimerAnnonce_AnswersBadRequestNamingTheField(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, mux := setupHandler(t)
-			id := deposerUneAnnonce(t, mux)
+			repo, mux := setupHandler(t)
+			id := deposerUneAnnonce(t, repo, mux)
 
 			rec := post(mux, "/annonces/"+id+"/suppression", tt.body)
 
@@ -53,8 +59,8 @@ func TestSupprimerAnnonce_AnswersBadRequestNamingTheField(t *testing.T) {
 }
 
 func TestSupprimerAnnonce_AnswersNotFoundForAnUnknownOrAlreadySupprimeeAnnonce(t *testing.T) {
-	_, mux := setupHandler(t)
-	id := deposerUneAnnonce(t, mux)
+	repo, mux := setupHandler(t)
+	id := deposerUneAnnonce(t, repo, mux)
 	body := `{"motDePasse": "demo1234", "raison": "autre"}`
 	require.Equal(t, http.StatusNoContent, post(mux, "/annonces/"+id+"/suppression", body).Code)
 
@@ -69,4 +75,14 @@ func TestSupprimerAnnonce_AnswersBadRequestForAMalformedID(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.False(t, strings.Contains(rec.Body.String(), "champ"))
+}
+
+func TestSupprimerAnnonce_AnswersNotFoundForAnAnnonceStillEnAttenteModeration(t *testing.T) {
+	_, mux := setupHandler(t)
+	var body DeposerAnnonceResponse
+	require.NoError(t, json.NewDecoder(post(mux, "/annonces", depotValide).Body).Decode(&body))
+
+	rec := post(mux, "/annonces/"+body.ID+"/suppression", `{"motDePasse": "demo1234", "raison": "autre"}`)
+
+	assert.Equal(t, http.StatusNotFound, rec.Code)
 }

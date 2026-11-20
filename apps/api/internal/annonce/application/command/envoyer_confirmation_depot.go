@@ -8,7 +8,7 @@ import (
 	"ddd-second-hand-marketplace/pkg/mailer"
 )
 
-// EnvoyerConfirmationDepotCommand emails the vendeur that their annonce is online.
+// EnvoyerConfirmationDepotCommand emails the vendeur that their annonce awaits moderation.
 type EnvoyerConfirmationDepotCommand func(annonce *domain.Annonce) error
 
 // BuildEnvoyerConfirmationDepotCommand sends, from fromEmail, the confirmation
@@ -18,12 +18,12 @@ func BuildEnvoyerConfirmationDepotCommand(m mailer.Mailer, fromEmail, baseURL st
 	baseURL = strings.TrimRight(baseURL, "/")
 	return func(annonce *domain.Annonce) error {
 		lien := fmt.Sprintf("%s/annonces/%s", baseURL, annonce.ID())
-		titre := fmt.Sprintf("Votre annonce « %s » est en ligne", annonce.Titre())
+		titre := fmt.Sprintf("Votre annonce « %s » est en cours de modération", annonce.Titre())
 		corps := fmt.Sprintf(`Bonjour %s,
 
-Votre annonce « %s » est en ligne.
+Votre annonce « %s » est en cours de modération : elle sera en ligne dès qu'elle aura été validée.
 
-Voir l'annonce : %s
+Lien de l'annonce : %s
 
 Pour la supprimer : %s/supprimer
 La suppression vous demandera le mot de passe que vous avez choisi au dépôt.

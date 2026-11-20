@@ -100,6 +100,35 @@ export interface SupprimerAnnonceArgs {
 // The fields of the suppression form, as the API names them in `champ`.
 export type ChampSuppression = 'motDePasse' | 'raison'
 
+// The fields of a challengee annonce a vendeur may change, as the correction
+// form is prefilled with, and the motif of the challenge.
+export interface AnnonceAEditer {
+  titre: string
+  description: string
+  // In centimes d'euro; zero is a don.
+  prix: number
+  // A catégorie code.
+  categorie: string
+  ville: string
+  codePostal: string
+  // Why moderation sent the annonce back.
+  motif: string
+}
+
+// What a vendeur sends to correct a challengee annonce: the mot de passe de
+// l'annonce and the fields of a dépôt they may change, already cleaned up by
+// the form (prix in centimes).
+export interface CorrigerAnnonceArgs {
+  id: string
+  motDePasse: string
+  titre: string
+  description: string
+  prix: number
+  categorie: string
+  ville: string
+  codePostal: string
+}
+
 // Port: what the UI needs from the API about annonces.
 export interface AnnonceGateway {
   // Resolves to null when no consultable annonce has this ID.
@@ -117,4 +146,15 @@ export interface AnnonceGateway {
   // unknown raison) rejects with an ApiError whose `champ` names the field;
   // an unknown or already supprimee annonce rejects with a 404.
   supprimerAnnonce: (args: SupprimerAnnonceArgs) => Promise<void>
+  // Resolves to what prefills the correction form. A wrong mot de passe
+  // rejects with an ApiError whose `champ` is motDePasse; an annonce that is
+  // unknown or not challengee rejects with a 404.
+  editerAnnonce: (args: {
+    id: string
+    motDePasse: string
+  }) => Promise<AnnonceAEditer>
+  // Resolves once the annonce is back in moderation. The refusals are the
+  // dépôt's (an ApiError whose `champ` names the field), the wrong mot de
+  // passe's and the 404's of editerAnnonce.
+  corrigerAnnonce: (args: CorrigerAnnonceArgs) => Promise<void>
 }

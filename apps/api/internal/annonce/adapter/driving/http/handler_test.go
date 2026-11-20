@@ -32,6 +32,8 @@ func setupHandler(t *testing.T) (*inmemory.InMemoryAnnonceRepository, *http.Serv
 		query.BuildListerRegionsQuery(),
 		command.BuildDeposerAnnonceCommand(repo, bus, func() time.Time { return maintenant }),
 		command.BuildSupprimerAnnonceCommand(repo, bus, func() time.Time { return maintenant }),
+		query.BuildConsulterAnnonceAEditerQuery(repo),
+		command.BuildCorrigerAnnonceCommand(repo, bus, func() time.Time { return maintenant }),
 	).RegisterRoutes(mux)
 	return repo, mux
 }
@@ -59,6 +61,7 @@ func TestConsulterAnnonce_AnswersTheAnnonceInFrenchJSON(t *testing.T) {
 		DeposeeLe: time.Date(2026, 11, 2, 10, 0, 0, 0, time.UTC),
 	})
 	require.NoError(t, err)
+	require.NoError(t, annonce.Activer())
 	require.NoError(t, repo.Save(annonce))
 
 	rec := get(mux, "/annonces/"+annonce.ID())
@@ -145,14 +148,15 @@ func TestDeposerAnnonce_NeverEchoesTheMotDePasse(t *testing.T) {
 	assert.NotContains(t, strings.ToLower(rec.Body.String()), "motdepasse")
 }
 
-func TestDeposerAnnonce_TheNewAnnonceCanBeConsulted(t *testing.T) {
+func TestDeposerAnnonce_TheNewAnnonceIsInvisibleUntilModerated(t *testing.T) {
 	_, mux := setupHandler(t)
 	var body DeposerAnnonceResponse
 	require.NoError(t, json.NewDecoder(post(mux, "/annonces", depotValide).Body).Decode(&body))
 
-	rec := get(mux, "/annonces/"+body.ID)
-
-	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, http.StatusNotFound, get(mux, "/annonces/"+body.ID).Code)
+	var recherche RechercherAnnoncesResponse
+	require.NoError(t, json.NewDecoder(get(mux, "/annonces").Body).Decode(&recherche))
+	assert.Zero(t, recherche.Total)
 }
 
 func TestDeposerAnnonce_AcceptsAMissingTelephone(t *testing.T) {

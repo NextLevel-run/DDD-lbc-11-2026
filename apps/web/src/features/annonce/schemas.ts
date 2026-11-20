@@ -21,6 +21,16 @@ export function eurosEnCentimes(euros: string): number | undefined {
   return Number(entiers) * 100 + Number(decimales.padEnd(2, '0'))
 }
 
+// Writes a prix in centimes as the form takes it back: euros, a comma and two
+// decimals only when there are cents.
+export function centimesEnEuros(centimes: number): string {
+  const euros = Math.floor(centimes / 100)
+  const reste = centimes % 100
+  return reste === 0
+    ? String(euros)
+    : `${euros},${String(reste).padStart(2, '0')}`
+}
+
 // Mirrors the API's rule: 01-95, Corse 200-206, overseas 971-974 and 976.
 function designeUnDepartement(codePostal: string): boolean {
   const prefixe = Number(codePostal.slice(0, 2))
@@ -95,6 +105,28 @@ export const deposerAnnonceSchema = z.object({
       "Le mot de passe de l'annonce doit comporter au moins 8 caractères",
     ),
 }) satisfies z.ZodType<DeposerAnnonceArgs, DeposerAnnonceValues>
+
+// The correction form: the fields of the dépôt a vendeur may change, with its
+// rules. The mot de passe is asked first, apart.
+export const corrigerAnnonceSchema = deposerAnnonceSchema.pick({
+  titre: true,
+  description: true,
+  prix: true,
+  categorie: true,
+  ville: true,
+  codePostal: true,
+})
+
+export type CorrigerAnnonceValues = Record<
+  keyof z.input<typeof corrigerAnnonceSchema>,
+  string
+>
+
+// The mot de passe step of the correction: the API checks it; the form only
+// asks for one.
+export const motDePasseSchema = z.object({
+  motDePasse: z.string().min(1, "Saisissez le mot de passe de l'annonce"),
+})
 
 // The suppression form: the raison and the mot de passe de l'annonce. The
 // API checks the mot de passe; the form only asks for one.

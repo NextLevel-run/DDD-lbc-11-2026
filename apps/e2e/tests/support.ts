@@ -49,7 +49,8 @@ export async function ouvrir(page: Page, url: string) {
 }
 
 // deposer sets up data straight through the API: the form itself is covered
-// once, by the parcours test.
+// once, by the parcours test. A new annonce awaits moderation and is online
+// nowhere: use deposerEnLigne for one the test wants to find.
 export async function deposer(
   request: APIRequestContext,
   depot: Depot,
@@ -57,6 +58,36 @@ export async function deposer(
   const response = await request.post(`${API_URL}/annonces`, { data: depot })
   expect(response.status(), await response.text()).toBe(201)
   const { id } = (await response.json()) as { id: string }
+  return id
+}
+
+// deposerEnLigne deposits an annonce then has a moderator validate it through
+// the API, and waits for the async consumers to put it online.
+export async function deposerEnLigne(
+  request: APIRequestContext,
+  depot: Depot,
+): Promise<string> {
+  const id = await deposer(request, depot)
+  const moderation = `${API_URL}/moderation/annonces/${id}`
+  // The queue is fed by an async consumer.
+  await expect
+    .poll(async () => (await request.get(moderation)).status(), {
+      message: `annonce ${id} in the moderation queue`,
+    })
+    .toBe(200)
+  const moderateur = { data: { moderateur: 'e2e-moderateur' } }
+  for (const action of ['verrou', 'validation']) {
+    const response = await request.post(`${moderation}/${action}`, moderateur)
+    expect(response.status(), await response.text()).toBe(204)
+  }
+  await expect
+    .poll(
+      async () => (await request.get(`${API_URL}/annonces/${id}`)).status(),
+      {
+        message: `annonce ${id} online`,
+      },
+    )
+    .toBe(200)
   return id
 }
 
@@ -86,10 +117,13 @@ export interface Email {
 }
 
 // emailPour waits for the email Mailcatcher received for this recipient: the
-// API sends it from an async consumer, after answering the dépôt.
+// API sends it from an async consumer, after answering the dépôt. A recipient
+// gets several emails along the moderation journey: `sujet` picks the one
+// whose subject contains it.
 export async function emailPour(
   request: APIRequestContext,
   destinataire: string,
+  sujet = '',
 ): Promise<Email> {
   let message: Message | undefined
   await expect
@@ -97,12 +131,16 @@ export async function emailPour(
       async () => {
         const response = await request.get(`${MAILCATCHER_URL}/messages`)
         const messages = (await response.json()) as Array<Message>
-        message = messages.find((m) =>
-          m.recipients.some((r) => r.includes(destinataire)),
+        message = messages.find(
+          (m) =>
+            m.recipients.some((r) => r.includes(destinataire)) &&
+            m.subject.includes(sujet),
         )
         return message !== undefined
       },
-      { message: `an email for ${destinataire} in Mailcatcher` },
+      {
+        message: `an email for ${destinataire} (${sujet || 'any subject'}) in Mailcatcher`,
+      },
     )
     .toBe(true)
   const plain = await request.get(

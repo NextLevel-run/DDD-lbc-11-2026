@@ -11,6 +11,11 @@ import (
 	annoncehttp "ddd-second-hand-marketplace/internal/annonce/adapter/driving/http"
 	annoncecommand "ddd-second-hand-marketplace/internal/annonce/application/command"
 	annoncequery "ddd-second-hand-marketplace/internal/annonce/application/query"
+	moderationinmemory "ddd-second-hand-marketplace/internal/moderation/adapter/driven/inmemory"
+	moderationconsumer "ddd-second-hand-marketplace/internal/moderation/adapter/driving/consumer"
+	moderationhttp "ddd-second-hand-marketplace/internal/moderation/adapter/driving/http"
+	moderationcommand "ddd-second-hand-marketplace/internal/moderation/application/command"
+	moderationquery "ddd-second-hand-marketplace/internal/moderation/application/query"
 	"ddd-second-hand-marketplace/pkg/eventbus"
 	"ddd-second-hand-marketplace/pkg/mailer"
 )
@@ -50,12 +55,50 @@ func newServer(cfg serverConfig) (http.Handler, []string, error) {
 	)); err != nil {
 		return nil, nil, fmt.Errorf("consumer: %w", err)
 	}
+	if err := annonceconsumer.SubscribeAnnonceValidee(eventBus,
+		annoncecommand.BuildActiverAnnonceCommand(annonceRepository),
+		annoncecommand.BuildEnvoyerAnnonceValideeCommand(cfg.Mailer, "noreply@seconde-main.local", cfg.FrontendURL),
+	); err != nil {
+		return nil, nil, fmt.Errorf("consumer: %w", err)
+	}
+	if err := annonceconsumer.SubscribeAnnonceChallengee(eventBus,
+		annoncecommand.BuildMarquerAnnonceChallengeeCommand(annonceRepository),
+		annoncecommand.BuildEnvoyerAnnonceChallengeeCommand(cfg.Mailer, "noreply@seconde-main.local", cfg.FrontendURL),
+	); err != nil {
+		return nil, nil, fmt.Errorf("consumer: %w", err)
+	}
+	if err := annonceconsumer.SubscribeAnnonceRefusee(eventBus,
+		annoncecommand.BuildMarquerAnnonceRefuseeCommand(annonceRepository),
+	); err != nil {
+		return nil, nil, fmt.Errorf("consumer: %w", err)
+	}
 	annoncehttp.NewHandler(
 		annoncequery.BuildConsulterAnnonceQuery(annonceRepository),
 		annoncequery.BuildRechercherAnnoncesQuery(annonceRepository),
 		annoncequery.BuildListerRegionsQuery(),
 		annoncecommand.BuildDeposerAnnonceCommand(annonceRepository, eventBus, time.Now),
 		annoncecommand.BuildSupprimerAnnonceCommand(annonceRepository, eventBus, time.Now),
+		annoncequery.BuildConsulterAnnonceAEditerQuery(annonceRepository),
+		annoncecommand.BuildCorrigerAnnonceCommand(annonceRepository, eventBus, time.Now),
+	).RegisterRoutes(mux)
+
+	// Bounded context: moderation. It reads AnnonceDeposee through a local
+	// interface and never imports annonce; annonce reads its decisions the same
+	// way.
+	historiqueRepository := moderationinmemory.NewInMemoryHistoriqueAnnonceRepository()
+	if err := moderationconsumer.SubscribeMiseEnFile(eventBus, moderationcommand.BuildMettreEnFileCommand(
+		historiqueRepository, time.Now,
+	)); err != nil {
+		return nil, nil, fmt.Errorf("consumer: %w", err)
+	}
+	moderationhttp.NewHandler(
+		moderationquery.BuildListerAnnoncesAModererQuery(historiqueRepository, time.Now),
+		moderationquery.BuildConsulterAnnonceAModererQuery(historiqueRepository, time.Now),
+		moderationcommand.BuildVerrouillerAnnonceCommand(historiqueRepository, time.Now),
+		moderationcommand.BuildRelacherVerrouCommand(historiqueRepository, time.Now),
+		moderationcommand.BuildValiderAnnonceCommand(historiqueRepository, eventBus, time.Now),
+		moderationcommand.BuildRefuserAnnonceCommand(historiqueRepository, eventBus, time.Now),
+		moderationcommand.BuildChallengerAnnonceCommand(historiqueRepository, eventBus, time.Now),
 	).RegisterRoutes(mux)
 
 	return mux, demoIDs, nil
